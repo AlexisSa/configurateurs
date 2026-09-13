@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Embed test — Oxatis simulé</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 1.5rem;
+        color: #18181b;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.75rem;
+      }
+      iframe {
+        width: 100%;
+        min-height: 720px;
+        border: 1px solid #d4d4d8;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simulateur parent Oxatis</h1>
+    <p>
+      Sert à tester <code>postMessage</code> / resize en local. Lancer
+      <code>npm run dev</code> puis ouvrir cette page.
+    </p>
+    <label>
+      Catégorie client (catid)
+      <select id="category">
+        <option value="3394217">S — 3394217</option>
+        <option value="3394220">M — 3394220</option>
+        <option value="3394218">B — 3394218</option>
+        <option value="3394154">A — 3394154</option>
+        <option value="3394219" selected>Z — 3394219</option>
+      </select>
+    </label>
+    <iframe id="frame" title="Configurateur" allow="clipboard-write"></iframe>
+    <script>
+      (function () {
+        var IFRAME_ORIGIN = window.location.origin;
+        var frame = document.getElementById("frame");
+        var select = document.getElementById("category");
+
+        frame.src = IFRAME_ORIGIN + "/?embed=1";
+
+        function sendPricingContext() {
+          if (!frame.contentWindow) return;
+          frame.contentWindow.postMessage(
+            {
+              type: "coffret-context",
+              categoryId: select.value,
+            },
+            IFRAME_ORIGIN
+          );
+        }
+
+        var retryTimer = null;
+        function startRetry() {
+          sendPricingContext();
+          if (retryTimer) clearInterval(retryTimer);
+          var attempts = 0;
+          retryTimer = setInterval(function () {
+            sendPricingContext();
+            attempts += 1;
+            if (attempts >= 20) clearInterval(retryTimer);
+          }, 500);
+        }
+
+        frame.addEventListener("load", startRetry);
+        select.addEventListener("change", sendPricingContext);
+
+        window.addEventListener("message", function (event) {
+          if (event.origin !== IFRAME_ORIGIN) return;
+          if (!event.data || !event.data.type) return;
+          if (event.data.type === "coffret-request-context") {
+            sendPricingContext();
+            return;
+          }
+          if (event.data.type === "coffret-resize" && event.data.height > 0) {
+            frame.style.height = event.data.height + "px";
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

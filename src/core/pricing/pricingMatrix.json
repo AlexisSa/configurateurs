@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "tiers": ["S", "M", "B", "A", "Z"],
+    "oxatisTierMapping": {
+      "S": "Tarif 2 (Price2VATExcluded)",
+      "M": "Tarif 3 (Price3VATExcluded)",
+      "B": "Tarif 4 (Price4VATExcluded)",
+      "A": "Tarif 5 (Price5VATExcluded)",
+      "Z": "Tarif 6 (Price6VATExcluded)"
+    }
+  },
+  "skus": {
+    "DEMO-SKU": {
+      "S": 100,
+      "M": 90,
+      "B": 80,
+      "A": 70,
+      "Z": 60
+    }
+  }
+}

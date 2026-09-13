@@ -1,0 +1,30 @@
+{
+  "defaultTier": "S",
+  "tiers": [
+    {
+      "code": "S",
+      "label": "Particulier / public",
+      "categoryId": "3394217"
+    },
+    {
+      "code": "M",
+      "label": "Tarif M",
+      "categoryId": "3394220"
+    },
+    {
+      "code": "B",
+      "label": "Tarif B",
+      "categoryId": "3394218"
+    },
+    {
+      "code": "A",
+      "label": "Tarif A",
+      "categoryId": "3394154"
+    },
+    {
+      "code": "Z",
+      "label": "Tarif Z",
+      "categoryId": "3394219"
+    }
+  ]
+}
