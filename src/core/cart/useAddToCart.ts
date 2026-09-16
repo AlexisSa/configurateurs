@@ -16,12 +16,55 @@ export type AddToCartStatus =
   | { state: "success"; method?: string }
   | { state: "error"; message: string };
 
+const PARENT_ORIGINS = [
+  OXATIS_ORIGIN,
+  "https://xeilom.fr",
+] as const;
+
 function isOxatisOrigin(origin: string): boolean {
   try {
     const host = new URL(origin).hostname;
     return host === "xeilom.fr" || host.endsWith(".xeilom.fr");
   } catch {
     return false;
+  }
+}
+
+/** Origine réelle du parent (referrer / ancestorOrigins), sinon null. */
+function resolveParentOrigin(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const ancestors = (
+    window.location as Location & { ancestorOrigins?: DOMStringList }
+  ).ancestorOrigins;
+  if (ancestors && ancestors.length > 0) {
+    try {
+      return new URL(ancestors[0]).origin;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (document.referrer) {
+    try {
+      const origin = new URL(document.referrer).origin;
+      if (isOxatisOrigin(origin)) return origin;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return null;
+}
+
+function postCartToParent(payload: object) {
+  const targets = new Set<string>();
+  const resolved = resolveParentOrigin();
+  if (resolved) targets.add(resolved);
+  for (const origin of PARENT_ORIGINS) targets.add(origin);
+
+  for (const origin of targets) {
+    window.parent.postMessage(payload, origin);
   }
 }
 
@@ -95,7 +138,7 @@ export function useAddToCart() {
         quantity: cleaned[0].quantity,
       };
 
-      window.parent.postMessage(payload, OXATIS_ORIGIN);
+      postCartToParent(payload);
 
       const onResult = (event: MessageEvent) => {
         if (!isOxatisOrigin(event.origin)) return;
@@ -126,7 +169,7 @@ export function useAddToCart() {
             "Le panier n’a pas répondu. Réessayez dans un instant.",
         });
         scheduleAutoDismiss();
-      }, CART_TIMEOUT_MS * cleaned.length);
+      }, CART_TIMEOUT_MS * Math.max(1, cleaned.length));
     },
     [clearTimers, scheduleAutoDismiss],
   );

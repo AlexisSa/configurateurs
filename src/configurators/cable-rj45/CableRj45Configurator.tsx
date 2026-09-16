@@ -5,10 +5,9 @@ import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Button, Card, Heading, Text } from "@/core/design-system";
-import type { ConfigPayload, StockStatus } from "@/core/payload/types";
+import type { StockStatus } from "@/core/payload/types";
 import { pickTierPrice } from "@/core/pricing/priceLevels";
 import { getStockStatus } from "@/core/stock/getStockStatus";
-import { buildCableRj45Payload } from "./buildPayload";
 import {
   DEFAULT_FILTERS,
   filterCableProducts,
@@ -44,7 +43,6 @@ export function CableRj45Configurator() {
   const [filters, setFilters] = useState<CableFilters>(DEFAULT_FILTERS);
   const [selectedSku, setSelectedSku] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [summary, setSummary] = useState<ConfigPayload | null>(null);
   const [stockBySku, setStockBySku] = useState<
     Partial<Record<string, StockStatus>>
   >({});
@@ -132,26 +130,10 @@ export function CableRj45Configurator() {
       const tentative = { ...prev, [key]: value };
       return resolveFacetFilters(products, tentative).filters;
     });
-    setSummary(null);
   }
 
   function resetFilters() {
     setFilters(DEFAULT_FILTERS);
-    setSummary(null);
-  }
-
-  async function handleValidate() {
-    if (!selectedProduct) return;
-    const stockStatus = await getStockStatus([selectedProduct.sku]);
-    setStockBySku((prev) => ({ ...prev, [selectedProduct.sku]: stockStatus }));
-    setSummary(
-      buildCableRj45Payload({
-        product: selectedProduct,
-        quantity,
-        pricingTierCode,
-        stockStatus,
-      }),
-    );
   }
 
   function handleAddToCart() {
@@ -259,7 +241,6 @@ export function CableRj45Configurator() {
                           type="button"
                           onClick={() => {
                             setSelectedSku(product.sku);
-                            setSummary(null);
                           }}
                           className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition ${
                             selected
@@ -314,7 +295,6 @@ export function CableRj45Configurator() {
                     value={quantity}
                     onChange={(e) => {
                       setQuantity(Number(e.target.value));
-                      setSummary(null);
                     }}
                   />
                 </label>
@@ -329,20 +309,14 @@ export function CableRj45Configurator() {
                     : null}
                 </Text>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={handleValidate} disabled={!selectedProduct}>
-                    Valider ma configuration
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleAddToCart}
-                    disabled={
-                      !selectedProduct?.oxatisId || cartStatus.state === "pending"
-                    }
-                  >
-                    Ajouter au panier
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={
+                    !selectedProduct?.oxatisId || cartStatus.state === "pending"
+                  }
+                >
+                  Ajouter au panier
+                </Button>
                 <CartNotification status={cartStatus} />
                 {!selectedProduct?.oxatisId && selectedProduct && (
                   <Text muted className="text-sm">
@@ -354,28 +328,6 @@ export function CableRj45Configurator() {
             )}
           </Card>
         </>
-      )}
-
-      {summary && (
-        <Card>
-          <Heading level={3}>Récapitulatif</Heading>
-          <ul className="mt-3 space-y-1 text-sm text-zinc-700">
-            {summary.nomenclature.map((line) => (
-              <li key={line.ref}>
-                {line.qty} × {line.label} ({line.ref})
-              </li>
-            ))}
-          </ul>
-          <Text className="mt-3 font-medium">
-            Total HT :{" "}
-            {summary.pricing.total > 0
-              ? `${summary.pricing.total.toFixed(2)} €`
-              : "— (prix indisponible pour ce tarif)"}
-          </Text>
-          <Text muted className="mt-1 text-sm">
-            {STOCK_LABEL[summary.stockStatus]}
-          </Text>
-        </Card>
       )}
     </div>
   );
