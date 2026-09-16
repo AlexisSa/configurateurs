@@ -28,7 +28,7 @@ const STOCK_LABEL: Record<StockStatus, string> = {
 };
 
 const selectClass =
-  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900";
+  "w-full min-w-0 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900";
 
 type CatalogState =
   | { status: "loading" }
@@ -145,7 +145,7 @@ export function CordonRj45Configurator() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div>
         <Heading level={1}>{CORDON_CATEGORY_ROOT}</Heading>
         <Text muted className="mt-2">
@@ -169,10 +169,10 @@ export function CordonRj45Configurator() {
       )}
 
       {catalog.status === "ready" && (
-        <>
-          <Card className="flex flex-col gap-4">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start">
+          <Card className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
             <Heading level={2}>Filtres</Heading>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               <FilterSelect
                 label="Type de cordon"
                 value={activeFilters.cordonType}
@@ -214,6 +214,7 @@ export function CordonRj45Configurator() {
             </Text>
             <Button
               variant="secondary"
+              className="w-full"
               onClick={resetFilters}
               disabled={
                 activeFilters.category === "all" &&
@@ -227,16 +228,20 @@ export function CordonRj45Configurator() {
             </Button>
           </Card>
 
-          <Card className="flex flex-col gap-4">
+          <Card className="flex min-w-0 flex-col gap-4">
             <Heading level={2}>Résultats</Heading>
 
             {filtered.length === 0 ? (
               <Text muted>Aucun cordon ne correspond à ces filtres.</Text>
             ) : (
               <>
-                <ul className="max-h-[28rem] divide-y divide-zinc-200 overflow-y-auto rounded-md border border-zinc-200">
+                <ul className="max-h-[32rem] divide-y divide-zinc-200 overflow-y-auto rounded-md border border-zinc-200">
                   {filtered.map((product) => {
                     const selected = product.sku === resolvedSku;
+                    const price = pickTierPrice(
+                      product.prices,
+                      pricingTierCode,
+                    );
                     return (
                       <li key={product.sku}>
                         <button
@@ -268,49 +273,57 @@ export function CordonRj45Configurator() {
                               {product.category ? ` · ${product.category}` : ""}
                               {product.length ? ` · ${product.length}` : ""}
                               {product.color ? ` · ${product.color}` : ""}
-                              {` · stock ${product.qtyInStock}`}
-                              {(() => {
-                                const price = pickTierPrice(
-                                  product.prices,
-                                  pricingTierCode,
-                                );
-                                return price == null
-                                  ? ""
-                                  : ` · ${price.toFixed(2)} € HT`;
-                              })()}
                             </span>
                           </span>
+                          {price != null && (
+                            <span
+                              className={`shrink-0 text-sm font-medium tabular-nums ${
+                                selected ? "text-white" : "text-zinc-800"
+                              }`}
+                            >
+                              {price.toFixed(2)} €
+                            </span>
+                          )}
                         </button>
                       </li>
                     );
                   })}
                 </ul>
 
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="font-medium text-zinc-800">Quantité</span>
-                  <input
-                    type="number"
-                    min={1}
-                    className="rounded-md border border-zinc-300 px-3 py-2"
-                    value={quantity}
-                    onChange={(e) => {
-                      setQuantity(Number(e.target.value));
-                    }}
-                  />
-                </label>
+                <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                  <label className="flex w-full max-w-[10rem] flex-col gap-1 text-sm">
+                    <span className="font-medium text-zinc-800">Quantité</span>
+                    <input
+                      type="number"
+                      min={1}
+                      className="rounded-md border border-zinc-300 px-3 py-2"
+                      value={quantity}
+                      onChange={(e) => {
+                        setQuantity(Number(e.target.value));
+                      }}
+                    />
+                  </label>
 
-                <Text muted className="text-sm">
-                  Prix unitaire HT :{" "}
-                  {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}
-                  {" · "}
-                  Total HT :{" "}
-                  {lineTotal == null ? "—" : `${lineTotal.toFixed(2)} €`}
-                  {" · "}
-                  {STOCK_LABEL[stockHint]}
-                  {selectedProduct
-                    ? ` (${selectedProduct.qtyInStock} en stock)`
-                    : null}
-                </Text>
+                  <StockPill
+                    status={stockHint}
+                    qtyInStock={selectedProduct?.qtyInStock}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 text-sm text-zinc-700">
+                  <p>
+                    <span className="text-zinc-500">Prix unitaire HT</span>
+                    <span className="mt-0.5 block text-base font-medium text-zinc-900 tabular-nums">
+                      {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-zinc-500">Total HT</span>
+                    <span className="mt-0.5 block text-base font-medium text-zinc-900 tabular-nums">
+                      {lineTotal == null ? "—" : `${lineTotal.toFixed(2)} €`}
+                    </span>
+                  </p>
+                </div>
 
                 <Button
                   onClick={handleAddToCart}
@@ -330,9 +343,42 @@ export function CordonRj45Configurator() {
               </>
             )}
           </Card>
-        </>
+        </div>
       )}
     </div>
+  );
+}
+
+function StockPill({
+  status,
+  qtyInStock,
+}: {
+  status: StockStatus;
+  qtyInStock?: number;
+}) {
+  const styles: Record<StockStatus, string> = {
+    ok: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    partial: "border-amber-200 bg-amber-50 text-amber-900",
+    unknown: "border-zinc-200 bg-zinc-100 text-zinc-700",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-xs font-medium ${styles[status]}`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          status === "ok"
+            ? "bg-emerald-500"
+            : status === "partial"
+              ? "bg-amber-500"
+              : "bg-zinc-400"
+        }`}
+        aria-hidden
+      />
+      {STOCK_LABEL[status]}
+      {qtyInStock != null ? ` · ${qtyInStock}` : null}
+    </span>
   );
 }
 
