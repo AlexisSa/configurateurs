@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Button, Card, Heading, Text } from "@/core/design-system";
-import { getUnitPriceHT } from "@/core/pricing/pricing";
 import type { ConfigPayload, StockStatus } from "@/core/payload/types";
+import { pickTierPrice } from "@/core/pricing/priceLevels";
 import { getStockStatus } from "@/core/stock/getStockStatus";
 import { buildCableRj45Payload } from "./buildPayload";
 import {
@@ -36,6 +37,8 @@ type CatalogState =
  */
 export function CableRj45Configurator() {
   const { pricingTierCode, tariffLabel } = useClientContext();
+  const { addToCart, status: cartStatus, resetStatus: resetCartStatus } =
+    useAddToCart();
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
   const [filters, setFilters] = useState<CableFilters>(DEFAULT_FILTERS);
   const [selectedSku, setSelectedSku] = useState("");
@@ -90,7 +93,7 @@ export function CableRj45Configurator() {
 
   const unitPrice = useMemo(() => {
     if (!selectedProduct) return null;
-    return getUnitPriceHT(selectedProduct.sku, pricingTierCode);
+    return pickTierPrice(selectedProduct.prices, pricingTierCode);
   }, [selectedProduct, pricingTierCode]);
 
   const stockHint: StockStatus = selectedProduct
@@ -105,6 +108,17 @@ export function CableRj45Configurator() {
     activeFilters.sheath === "all" &&
     activeFilters.productType === "all" &&
     activeFilters.pairCount === "all";
+
+  const cartMessage =
+    cartStatus.state === "pending"
+      ? "Ajout au panier…"
+      : cartStatus.state === "success"
+        ? "Ajouté au panier Oxatis."
+        : cartStatus.state === "redirect"
+          ? "Redirection vers le panier Oxatis…"
+          : cartStatus.state === "error"
+            ? cartStatus.message
+            : null;
 
   useEffect(() => {
     if (!selectedProduct) return;
@@ -148,6 +162,12 @@ export function CableRj45Configurator() {
         stockStatus,
       }),
     );
+  }
+
+  function handleAddToCart() {
+    if (!selectedProduct?.oxatisId) return;
+    resetCartStatus();
+    addToCart([{ productId: selectedProduct.oxatisId, quantity }]);
   }
 
   return (
@@ -278,6 +298,15 @@ export function CableRj45Configurator() {
                                 : ""}
                               {product.sheath ? ` · ${product.sheath}` : ""}
                               {` · stock ${product.qtyInStock}`}
+                              {(() => {
+                                const price = pickTierPrice(
+                                  product.prices,
+                                  pricingTierCode,
+                                );
+                                return price == null
+                                  ? ""
+                                  : ` · ${price.toFixed(2)} € HT`;
+                              })()}
                             </span>
                           </span>
                         </button>
@@ -310,9 +339,37 @@ export function CableRj45Configurator() {
                     : null}
                 </Text>
 
-                <Button onClick={handleValidate} disabled={!selectedProduct}>
-                  Valider ma configuration
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleValidate} disabled={!selectedProduct}>
+                    Valider ma configuration
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleAddToCart}
+                    disabled={
+                      !selectedProduct?.oxatisId || cartStatus.state === "pending"
+                    }
+                  >
+                    Ajouter au panier
+                  </Button>
+                </div>
+                {cartMessage && (
+                  <Text
+                    className={`text-sm ${
+                      cartStatus.state === "error"
+                        ? "text-red-700"
+                        : "text-zinc-600"
+                    }`}
+                  >
+                    {cartMessage}
+                  </Text>
+                )}
+                {!selectedProduct?.oxatisId && selectedProduct && (
+                  <Text muted className="text-sm">
+                    Identifiant Oxatis manquant — panier indisponible pour cette
+                    référence.
+                  </Text>
+                )}
               </>
             )}
           </Card>
@@ -333,7 +390,7 @@ export function CableRj45Configurator() {
             Total HT :{" "}
             {summary.pricing.total > 0
               ? `${summary.pricing.total.toFixed(2)} €`
-              : "— (SKU absent de la grille tarifaire)"}
+              : "— (prix indisponible pour ce tarif)"}
           </Text>
           <Text muted className="mt-1 text-sm">
             {STOCK_LABEL[summary.stockStatus]}

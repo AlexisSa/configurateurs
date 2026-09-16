@@ -4,15 +4,14 @@ import {
   withoutExcludedCategoryProducts,
   type ProductCategoryLink,
 } from "@/core/catalog/excludedCategories";
+import { fetchTierPricesByProductIds } from "@/core/pricing/fetchProductPrices";
 import {
   getSupabaseBrowserClient,
   isSupabaseConfigured,
 } from "@/core/supabase/client";
 import { mapProductRow, type CableProduct, type ProductFacet } from "./catalog";
 
-/** Racine Oxatis exacte (Product DB / categories.name). */
 export const CABLE_CATEGORY_ROOT = "Câble RJ45 informatique";
-
 const PRODUCT_PAGE_SIZE = 100;
 
 export type LoadCableCatalogResult =
@@ -23,16 +22,13 @@ type ProductRow = {
   id: string;
   sku: string;
   name: string;
+  oxatis_id: number | null;
   qty_in_stock: number | null;
   image_url: string | null;
   facets: ProductFacet[] | null;
   product_categories?: ProductCategoryLink[] | null;
 };
 
-/**
- * Charge le catalogue via l’arbre catégories Oxatis « Câble RJ45 informatique ».
- * Isolé : n’importe aucun autre configurateur.
- */
 export async function loadCableRj45Catalog(): Promise<LoadCableCatalogResult> {
   if (!isSupabaseConfigured()) {
     return {
@@ -67,10 +63,20 @@ export async function loadCableRj45Catalog(): Promise<LoadCableCatalogResult> {
     const productIds = await listProductIdsInCategories(client, categoryIds);
     const rows = await fetchProductsByIds(client, productIds);
     const active = withoutExcludedCategoryProducts(rows);
+    const pricesById = await fetchTierPricesByProductIds(
+      client,
+      active.map((row) => row.id),
+    );
 
     const bySku = new Map<string, CableProduct>();
     for (const row of active) {
-      bySku.set(row.sku, mapProductRow(row));
+      bySku.set(
+        row.sku,
+        mapProductRow({
+          ...row,
+          prices: pricesById.get(row.id) ?? {},
+        }),
+      );
     }
 
     const products = [...bySku.values()].sort((a, b) =>
@@ -102,14 +108,10 @@ async function listProductIdsInCategories(
       .in("category_id", categoryIds)
       .range(from, from + pageSize - 1);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
     const page = data ?? [];
-    for (const row of page) {
-      ids.add(String(row.product_id));
-    }
+    for (const row of page) ids.add(String(row.product_id));
     if (page.length < pageSize) break;
     from += pageSize;
   }
@@ -128,14 +130,11 @@ async function fetchProductsByIds(
     const { data, error } = await client
       .from("products")
       .select(
-        `id, sku, name, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
+        `id, sku, name, oxatis_id, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
       )
       .in("id", batch);
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
+    if (error) throw new Error(error.message);
     rows.push(...((data ?? []) as ProductRow[]));
   }
 

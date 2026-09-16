@@ -1,5 +1,7 @@
 /** Modèle + filtres du catalogue câble RJ45 informatique (Supabase / Oxatis). */
 
+import type { TierPriceMap } from "@/core/pricing/priceLevels";
+
 export type ProductFacet = {
   key: string;
   code?: string | null;
@@ -9,6 +11,7 @@ export type ProductFacet = {
 export type CableProduct = {
   sku: string;
   label: string;
+  oxatisId: number | null;
   category: string | null;
   color: string | null;
   shielding: string | null;
@@ -17,6 +20,7 @@ export type CableProduct = {
   pairCount: string | null;
   qtyInStock: number;
   imageUrl: string | null;
+  prices: TierPriceMap;
 };
 
 export type CableFilters = {
@@ -48,14 +52,21 @@ export function getFacetValue(
 export function mapProductRow(row: {
   sku: string;
   name: string;
+  oxatis_id: number | null;
   qty_in_stock: number | null;
   image_url: string | null;
   facets: ProductFacet[] | null;
+  prices?: TierPriceMap;
 }): CableProduct {
   const facets = row.facets ?? [];
+  const oxatisRaw = row.oxatis_id == null ? null : Number(row.oxatis_id);
   return {
     sku: row.sku,
     label: row.name,
+    oxatisId:
+      oxatisRaw != null && Number.isFinite(oxatisRaw) && oxatisRaw > 0
+        ? oxatisRaw
+        : null,
     category: getFacetValue(facets, "Catégorie"),
     color: getFacetValue(facets, "Couleur"),
     shielding: getFacetValue(facets, "Blindage"),
@@ -64,6 +75,7 @@ export function mapProductRow(row: {
     pairCount: getFacetValue(facets, "Nombre de paires"),
     qtyInStock: Number(row.qty_in_stock ?? 0),
     imageUrl: row.image_url,
+    prices: row.prices ?? {},
   };
 }
 

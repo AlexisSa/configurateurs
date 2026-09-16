@@ -10,17 +10,19 @@
 
 Aucun import croisé entre configurateurs.
 
-## Flux tarifaire (Oxatis)
+## Flux tarifaire (Oxatis + Supabase)
 
 ```
 Parent Oxatis (catid)
   → postMessage coffret-context | ?categoryId=
   → resolvePricingTierCode → S|M|B|A|Z
-  → getUnitPriceHT(sku, tier) via pricingMatrix.json
+  → product_prices.level (2→S … 6→Z) via fetchTierPricesByProductIds
   → ConfigPayload.clientTariffCode + pricing.total
 ```
 
-Guide détaillé : [integration-oxatis-embed-tarifs.md](../integration-oxatis-embed-tarifs.md).
+Panier : `docs/AJOUT-PANIER-OXATIS.md` — `useAddToCart` → `XEILOM_ADD_TO_CART` (bridge parent).
+
+Guide tarifs historique / CSV : [integration-oxatis-embed-tarifs.md](../integration-oxatis-embed-tarifs.md).
 
 ## Flux stocks / catalogue (Supabase)
 

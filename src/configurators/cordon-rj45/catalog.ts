@@ -1,5 +1,7 @@
 /** Modèle + filtres du catalogue cordons de brassage RJ45 (Supabase / Oxatis). */
 
+import type { TierPriceMap } from "@/core/pricing/priceLevels";
+
 export type ProductFacet = {
   key: string;
   code?: string | null;
@@ -12,14 +14,17 @@ export const STANDARD_CORDON_TYPE = "Standards";
 export type Rj45Product = {
   sku: string;
   label: string;
+  /** ID Oxatis (ItmID) pour le panier. */
+  oxatisId: number | null;
   category: string | null;
   color: string | null;
   length: string | null;
   shielding: string | null;
-  /** Toujours renseigné : facet Oxatis ou « Standards ». */
   cordonType: string;
   qtyInStock: number;
   imageUrl: string | null;
+  /** Prix HT par tarif client (product_prices.level). */
+  prices: TierPriceMap;
 };
 
 export type Rj45Filters = {
@@ -46,7 +51,6 @@ export function getFacetValue(
   return hit?.value?.trim() ? hit.value.trim() : null;
 }
 
-/** Parse "1,00 m" / "1 m" → mètres. */
 export function parseLengthMeters(raw: string | null): number | null {
   if (!raw) return null;
   const match = raw.replace(/\s/g, "").match(/^(\d+(?:[.,]\d+)?)/);
@@ -64,14 +68,21 @@ export function resolveCordonType(
 export function mapProductRow(row: {
   sku: string;
   name: string;
+  oxatis_id: number | null;
   qty_in_stock: number | null;
   image_url: string | null;
   facets: ProductFacet[] | null;
+  prices?: TierPriceMap;
 }): Rj45Product {
   const facets = row.facets ?? [];
+  const oxatisRaw = row.oxatis_id == null ? null : Number(row.oxatis_id);
   return {
     sku: row.sku,
     label: row.name,
+    oxatisId:
+      oxatisRaw != null && Number.isFinite(oxatisRaw) && oxatisRaw > 0
+        ? oxatisRaw
+        : null,
     category: getFacetValue(facets, "Catégorie"),
     color: getFacetValue(facets, "Couleur"),
     length: getFacetValue(facets, "Longueur"),
@@ -79,6 +90,7 @@ export function mapProductRow(row: {
     cordonType: resolveCordonType(facets),
     qtyInStock: Number(row.qty_in_stock ?? 0),
     imageUrl: row.image_url,
+    prices: row.prices ?? {},
   };
 }
 
