@@ -6,12 +6,18 @@ import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Heading, Text } from "@/core/design-system";
 import { getConfiguratorMeta } from "@/core/registry";
 import StubConfigurator from "@/configurators/stub";
+import CordonRj45Configurator from "@/configurators/cordon-rj45";
+import CableRj45Configurator from "@/configurators/cable-rj45";
 
 function ConfiguratorSlot({ slug }: { slug: string }) {
   // Switch explicite : évite de « créer » un composant pendant le render.
   switch (slug) {
     case "stub":
       return <StubConfigurator />;
+    case "cordon-rj45":
+      return <CordonRj45Configurator />;
+    case "cable-rj45":
+      return <CableRj45Configurator />;
     default:
       return null;
   }

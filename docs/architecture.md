@@ -25,11 +25,18 @@ Guide détaillé : [integration-oxatis-embed-tarifs.md](../integration-oxatis-em
 ## Flux stocks / catalogue (Supabase)
 
 ```
-Configurateur → getStockStatus(refs) → public.products (sku, qty_in_stock)
+Configurateur cordons → arbre `categories` (« Cordons de brassage RJ45 »)
+  → product_categories → products (+ facets)
+  → withoutExcludedCategoryProducts (Anciens Produits)
+getStockStatus(refs) → public.products (sku, qty_in_stock)
 getSupabaseLinkStatus() → badge UI hub/stub
 ```
 
 Projet lié : **Product DB** (`products` ~6k lignes, `qty_in_stock`, prix dans `product_prices`).
+
+**Règle catalogue :** ne jamais inclure les produits rattachés à la catégorie **Anciens Produits** (`product_categories` → `categories`).  
+Implémentation centralisée : `src/core/catalog/excludedCategories.ts` — à utiliser pour toute lecture `products`.  
+Parcours d’arbre : `src/core/catalog/categoryTree.ts`.
 
 **RLS :** lecture catalogue autorisée pour `anon` (configurateur public / iframe).  
 Écriture + `product_prices` restent réservés à `authenticated` (admin).

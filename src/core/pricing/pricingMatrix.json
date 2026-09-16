@@ -1,6 +1,12 @@
 {
   "meta": {
-    "tiers": ["S", "M", "B", "A", "Z"],
+    "tiers": [
+      "S",
+      "M",
+      "B",
+      "A",
+      "Z"
+    ],
     "oxatisTierMapping": {
       "S": "Tarif 2 (Price2VATExcluded)",
       "M": "Tarif 3 (Price3VATExcluded)",

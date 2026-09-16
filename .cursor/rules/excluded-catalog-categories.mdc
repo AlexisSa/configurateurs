@@ -1,0 +1,12 @@
+---
+description: Exclure la catégorie catalogue Anciens Produits de toute lecture products
+alwaysApply: true
+---
+
+# Catalogue — catégories exclues
+
+Ne jamais inclure les produits rattachés à la catégorie **Anciens Produits** (table `categories` via `product_categories`).
+
+- Utiliser `@/core/catalog/excludedCategories` (`withoutExcludedCategoryProducts`, `PRODUCT_CATEGORY_EMBED`, `isExcludedCategoryName`).
+- Toute nouvelle requête `from("products")` destinée au catalogue / stock / configurateurs doit joindre les catégories et filtrer via ce module.
+- Ne pas hardcoder d’autres règles d’exclusion métier dans un configurateur : étendre `EXCLUDED_CATEGORY_NAMES` dans le core.

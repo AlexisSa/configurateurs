@@ -1,9 +1,14 @@
+import {
+  PRODUCT_CATEGORY_EMBED,
+  withoutExcludedCategoryProducts,
+} from "@/core/catalog/excludedCategories";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/core/supabase/client";
 import type { StockStatus } from "@/core/payload/types";
 
 /**
  * Stock via `public.products` (sku + qty_in_stock).
- * - SKU absent → partial / unknown
+ * Ignore les produits des catégories exclues (ex. Anciens Produits).
+ * - SKU absent / exclu → partial / unknown
  * - qty_in_stock <= 0 → partial (sauf si toutes les refs manquent → unknown)
  */
 export async function getStockStatus(refs: string[]): Promise<StockStatus> {
@@ -16,7 +21,7 @@ export async function getStockStatus(refs: string[]): Promise<StockStatus> {
   try {
     const { data, error } = await client
       .from("products")
-      .select("sku, qty_in_stock")
+      .select(`sku, qty_in_stock, ${PRODUCT_CATEGORY_EMBED}`)
       .in("sku", refs);
 
     if (error) {
@@ -24,11 +29,10 @@ export async function getStockStatus(refs: string[]): Promise<StockStatus> {
       return "unknown";
     }
 
+    const active = withoutExcludedCategoryProducts(data ?? []);
+
     const bySku = new Map(
-      (data ?? []).map((row) => [
-        String(row.sku),
-        Number(row.qty_in_stock ?? 0),
-      ]),
+      active.map((row) => [String(row.sku), Number(row.qty_in_stock ?? 0)]),
     );
 
     let found = 0;
