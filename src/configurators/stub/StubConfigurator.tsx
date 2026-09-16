@@ -18,7 +18,7 @@ const STOCK_LABEL: Record<StockStatus, string> = {
  * Configurateur stub isolé — UI orientée client (pas de jargon technique).
  */
 export function StubConfigurator() {
-  const { pricingTierCode, tariffLabel } = useClientContext();
+  const { pricingTierCode } = useClientContext();
   const [state, setState] = useState<StubState>({
     label: "Module démo",
     quantity: 1,
@@ -59,7 +59,7 @@ export function StubConfigurator() {
       <div>
         <Heading level={1}>Configuration</Heading>
         <Text muted className="mt-2">
-          {tariffLabel}. Prix unitaire HT :{" "}
+          Prix unitaire HT :{" "}
           {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}.
         </Text>
       </div>

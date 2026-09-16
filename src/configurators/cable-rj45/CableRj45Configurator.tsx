@@ -36,7 +36,7 @@ type CatalogState =
  * Configurateur câble RJ45 informatique — catalogue = catégorie Oxatis.
  */
 export function CableRj45Configurator() {
-  const { pricingTierCode, tariffLabel } = useClientContext();
+  const { pricingTierCode } = useClientContext();
   const { addToCart, status: cartStatus, resetStatus: resetCartStatus } =
     useAddToCart();
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
@@ -113,9 +113,9 @@ export function CableRj45Configurator() {
     cartStatus.state === "pending"
       ? "Ajout au panier…"
       : cartStatus.state === "success"
-        ? "Ajouté au panier Oxatis."
+        ? "Produit ajouté au panier."
         : cartStatus.state === "redirect"
-          ? "Redirection vers le panier Oxatis…"
+          ? "Redirection vers le panier…"
           : cartStatus.state === "error"
             ? cartStatus.message
             : null;
@@ -175,8 +175,8 @@ export function CableRj45Configurator() {
       <div>
         <Heading level={1}>{CABLE_CATEGORY_ROOT}</Heading>
         <Text muted className="mt-2">
-          Catalogue issu de la catégorie Oxatis homonyme. Filtrez par type,
-          catégorie, couleur, blindage et gaine. {tariffLabel}.
+          Affinez votre recherche, sélectionnez une référence, puis ajoutez-la
+          au panier.
         </Text>
       </div>
 
@@ -366,8 +366,8 @@ export function CableRj45Configurator() {
                 )}
                 {!selectedProduct?.oxatisId && selectedProduct && (
                   <Text muted className="text-sm">
-                    Identifiant Oxatis manquant — panier indisponible pour cette
-                    référence.
+                    Cette référence ne peut pas être ajoutée au panier pour le
+                    moment.
                   </Text>
                 )}
               </>

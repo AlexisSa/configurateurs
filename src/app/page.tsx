@@ -6,7 +6,7 @@ import { Card, Heading, Text } from "@/core/design-system";
 import { CONFIGURATOR_METAS } from "@/core/registry";
 
 export default function HomePage() {
-  const { isEmbed, tariffLabel } = useClientContext();
+  const { isEmbed } = useClientContext();
 
   return (
     <main
@@ -16,15 +16,9 @@ export default function HomePage() {
         <header className="mb-10">
           <Heading level={1}>Configurateurs</Heading>
           <Text muted className="mt-2">
-            Choisissez un produit à configurer. {tariffLabel}.
+            Choisissez un produit à configurer.
           </Text>
         </header>
-      )}
-
-      {isEmbed && (
-        <Text muted className="mb-4 text-sm">
-          {tariffLabel}
-        </Text>
       )}
 
       <ul className="grid gap-4 sm:grid-cols-2">

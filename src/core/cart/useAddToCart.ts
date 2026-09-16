@@ -45,7 +45,7 @@ export function useAddToCart() {
       if (cleaned.length === 0) {
         setStatus({
           state: "error",
-          message: "Identifiant produit Oxatis manquant.",
+          message: "Produit introuvable pour le panier.",
         });
         return;
       }
@@ -84,7 +84,7 @@ export function useAddToCart() {
         } else {
           setStatus({
             state: "error",
-            message: data.error ?? "Ajout au panier refusé par Oxatis.",
+            message: data.error ?? "Impossible d’ajouter au panier.",
           });
         }
       };

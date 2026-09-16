@@ -27,14 +27,14 @@ export const CONFIGURATOR_METAS: ConfiguratorMeta[] = [
     slug: "cordon-rj45",
     title: "Cordons de brassage RJ45",
     description:
-      "Configurez un cordon depuis la catégorie Oxatis homonyme (type, cat., couleur, longueur…).",
+      "Choisissez type, catégorie, couleur et longueur pour trouver le bon cordon.",
   },
   {
     id: "cable-rj45",
     slug: "cable-rj45",
     title: "Câble RJ45 informatique",
     description:
-      "Configurez un câble réseau depuis la catégorie Oxatis homonyme (type, cat., blindage, gaine…).",
+      "Choisissez type, catégorie, blindage et gaine pour trouver le bon câble.",
   },
 ];
 
