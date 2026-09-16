@@ -95,6 +95,11 @@ export function CableRj45Configurator() {
     return pickTierPrice(selectedProduct.prices, pricingTierCode);
   }, [selectedProduct, pricingTierCode]);
 
+  const lineTotal =
+    unitPrice == null
+      ? null
+      : unitPrice * Math.max(1, Math.floor(quantity) || 1);
+
   const stockHint: StockStatus = selectedProduct
     ? (stockBySku[selectedProduct.sku] ??
       (selectedProduct.qtyInStock > 0 ? "ok" : "partial"))
@@ -302,6 +307,9 @@ export function CableRj45Configurator() {
                 <Text muted className="text-sm">
                   Prix unitaire HT :{" "}
                   {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}
+                  {" · "}
+                  Total HT :{" "}
+                  {lineTotal == null ? "—" : `${lineTotal.toFixed(2)} €`}
                   {" · "}
                   {STOCK_LABEL[stockHint]}
                   {selectedProduct
