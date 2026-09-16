@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ADD_TO_CART_MESSAGE_TYPE,
   ADD_TO_CART_RESULT_MESSAGE_TYPE,
-  buildOxatisCartUrl,
   CART_TIMEOUT_MS,
   OXATIS_ORIGIN,
   type AddToCartResultMessage,
@@ -15,23 +14,45 @@ export type AddToCartStatus =
   | { state: "idle" }
   | { state: "pending" }
   | { state: "success"; method?: string }
-  | { state: "error"; message: string }
-  | { state: "redirect" };
+  | { state: "error"; message: string };
+
+function isOxatisOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname;
+    return host === "xeilom.fr" || host.endsWith(".xeilom.fr");
+  } catch {
+    return false;
+  }
+}
 
 /**
- * Ajoute au panier Oxatis via postMessage (iframe + bridge),
- * avec fallback URL si hors iframe / bridge absent.
+ * Ajoute au panier Oxatis via postMessage (iframe + bridge).
+ * Ne quitte jamais le configurateur : notification succès / erreur uniquement.
  */
 export function useAddToCart() {
   const [status, setStatus] = useState<AddToCartStatus>({ state: "idle" });
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearTimer = useCallback(() => {
+  const clearTimers = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (dismissRef.current) {
+      clearTimeout(dismissRef.current);
+      dismissRef.current = null;
+    }
   }, []);
+
+  const scheduleAutoDismiss = useCallback(() => {
+    if (dismissRef.current) clearTimeout(dismissRef.current);
+    dismissRef.current = setTimeout(() => {
+      setStatus({ state: "idle" });
+    }, 4500);
+  }, []);
+
+  useEffect(() => () => clearTimers(), [clearTimers]);
 
   const addToCart = useCallback(
     (items: OxatisCartItem[]) => {
@@ -47,19 +68,24 @@ export function useAddToCart() {
           state: "error",
           message: "Produit introuvable pour le panier.",
         });
+        scheduleAutoDismiss();
         return;
       }
 
-      const inIframe = typeof window !== "undefined" && window.parent !== window;
-      const fallbackUrl = buildOxatisCartUrl(cleaned);
+      const inIframe =
+        typeof window !== "undefined" && window.parent !== window;
 
       if (!inIframe) {
-        setStatus({ state: "redirect" });
-        window.location.href = fallbackUrl;
+        setStatus({
+          state: "error",
+          message:
+            "L’ajout au panier est disponible depuis la boutique en ligne.",
+        });
+        scheduleAutoDismiss();
         return;
       }
 
-      clearTimer();
+      clearTimers();
       setStatus({ state: "pending" });
 
       const payload = {
@@ -72,11 +98,11 @@ export function useAddToCart() {
       window.parent.postMessage(payload, OXATIS_ORIGIN);
 
       const onResult = (event: MessageEvent) => {
-        if (event.origin !== OXATIS_ORIGIN) return;
+        if (!isOxatisOrigin(event.origin)) return;
         const data = event.data as AddToCartResultMessage | null;
         if (!data || data.type !== ADD_TO_CART_RESULT_MESSAGE_TYPE) return;
 
-        clearTimer();
+        clearTimers();
         window.removeEventListener("message", onResult);
 
         if (data.success) {
@@ -87,24 +113,28 @@ export function useAddToCart() {
             message: data.error ?? "Impossible d’ajouter au panier.",
           });
         }
+        scheduleAutoDismiss();
       };
 
       window.addEventListener("message", onResult);
 
       timeoutRef.current = setTimeout(() => {
         window.removeEventListener("message", onResult);
-        setStatus({ state: "redirect" });
-        // Bridge absent / origine non autorisée → panier Oxatis.
-        window.top!.location.href = fallbackUrl;
+        setStatus({
+          state: "error",
+          message:
+            "Le panier n’a pas répondu. Réessayez dans un instant.",
+        });
+        scheduleAutoDismiss();
       }, CART_TIMEOUT_MS * cleaned.length);
     },
-    [clearTimer],
+    [clearTimers, scheduleAutoDismiss],
   );
 
   const resetStatus = useCallback(() => {
-    clearTimer();
+    clearTimers();
     setStatus({ state: "idle" });
-  }, [clearTimer]);
+  }, [clearTimers]);
 
   return { addToCart, status, resetStatus };
 }

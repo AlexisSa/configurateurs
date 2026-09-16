@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Button, Card, Heading, Text } from "@/core/design-system";
@@ -103,17 +104,6 @@ export function CordonRj45Configurator() {
     ? (stockBySku[selectedProduct.sku] ??
       (selectedProduct.qtyInStock > 0 ? "ok" : "partial"))
     : "unknown";
-
-  const cartMessage =
-    cartStatus.state === "pending"
-      ? "Ajout au panier…"
-      : cartStatus.state === "success"
-        ? "Produit ajouté au panier."
-        : cartStatus.state === "redirect"
-          ? "Redirection vers le panier…"
-          : cartStatus.state === "error"
-            ? cartStatus.message
-            : null;
 
   useEffect(() => {
     if (!selectedProduct) return;
@@ -348,17 +338,7 @@ export function CordonRj45Configurator() {
                     Ajouter au panier
                   </Button>
                 </div>
-                {cartMessage && (
-                  <Text
-                    className={`text-sm ${
-                      cartStatus.state === "error"
-                        ? "text-red-700"
-                        : "text-zinc-600"
-                    }`}
-                  >
-                    {cartMessage}
-                  </Text>
-                )}
+                <CartNotification status={cartStatus} />
                 {!selectedProduct?.oxatisId && selectedProduct && (
                   <Text muted className="text-sm">
                     Cette référence ne peut pas être ajoutée au panier pour le
