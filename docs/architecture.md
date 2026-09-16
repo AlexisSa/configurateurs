@@ -31,7 +31,7 @@ Configurateur cordons → arbre `categories` (« Cordons de brassage RJ45 »)
   → product_categories → products (+ facets)
   → withoutExcludedCategoryProducts (Anciens Produits)
 getStockStatus(refs) → public.products (sku, qty_in_stock)
-getSupabaseLinkStatus() → badge UI hub/stub
+getSupabaseLinkStatus() → badge UI hub
 ```
 
 Projet lié : **Product DB** (`products` ~6k lignes, `qty_in_stock`, prix dans `product_prices`).

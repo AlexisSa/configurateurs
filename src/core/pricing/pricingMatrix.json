@@ -15,13 +15,5 @@
       "Z": "Tarif 6 (Price6VATExcluded)"
     }
   },
-  "skus": {
-    "DEMO-SKU": {
-      "S": 100,
-      "M": 90,
-      "B": 80,
-      "A": 70,
-      "Z": 60
-    }
-  }
+  "skus": {}
 }

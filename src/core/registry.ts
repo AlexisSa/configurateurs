@@ -17,12 +17,6 @@ export type ConfiguratorModule = ConfiguratorMeta & {
 
 export const CONFIGURATOR_METAS: ConfiguratorMeta[] = [
   {
-    id: "stub",
-    slug: "stub",
-    title: "Exemple de configuration",
-    description: "Parcours de démonstration pour tester l’outil.",
-  },
-  {
     id: "cordon-rj45",
     slug: "cordon-rj45",
     title: "Cordons de brassage RJ45",

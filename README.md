@@ -13,7 +13,6 @@ npm run dev
 ```
 
 - Hub : [http://localhost:3000](http://localhost:3000)
-- Stub : [http://localhost:3000/configurators/stub](http://localhost:3000/configurators/stub)
 - Cordons de brassage RJ45 : [http://localhost:3000/configurators/cordon-rj45](http://localhost:3000/configurators/cordon-rj45)
 - Câble RJ45 informatique : [http://localhost:3000/configurators/cable-rj45](http://localhost:3000/configurators/cable-rj45)
 - Simulateur iframe Oxatis : [http://localhost:3000/embed-test.html](http://localhost:3000/embed-test.html)
