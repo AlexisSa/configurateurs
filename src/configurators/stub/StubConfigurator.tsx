@@ -57,8 +57,7 @@ export function StubConfigurator() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div>
-        <Heading level={1}>Configuration</Heading>
-        <Text muted className="mt-2">
+        <Text muted>
           Prix unitaire HT :{" "}
           {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}.
         </Text>

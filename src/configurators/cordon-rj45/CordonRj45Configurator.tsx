@@ -17,7 +17,6 @@ import {
   type Rj45Product,
 } from "./catalog";
 import {
-  CORDON_CATEGORY_ROOT,
   loadCordonRj45Catalog,
 } from "./loadCatalog";
 
@@ -147,8 +146,7 @@ export function CordonRj45Configurator() {
   return (
     <div className="flex w-full flex-col gap-6">
       <div>
-        <Heading level={1}>{CORDON_CATEGORY_ROOT}</Heading>
-        <Text muted className="mt-2">
+        <Text muted>
           Affinez votre recherche, sélectionnez une référence, puis ajoutez-la
           au panier.
         </Text>

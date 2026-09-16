@@ -16,7 +16,7 @@ import {
   type CableFilters,
   type CableProduct,
 } from "./catalog";
-import { CABLE_CATEGORY_ROOT, loadCableRj45Catalog } from "./loadCatalog";
+import { loadCableRj45Catalog } from "./loadCatalog";
 
 const STOCK_LABEL: Record<StockStatus, string> = {
   ok: "En stock",
@@ -150,8 +150,7 @@ export function CableRj45Configurator() {
   return (
     <div className="flex w-full flex-col gap-6">
       <div>
-        <Heading level={1}>{CABLE_CATEGORY_ROOT}</Heading>
-        <Text muted className="mt-2">
+        <Text muted>
           Affinez votre recherche, sélectionnez une référence, puis ajoutez-la
           au panier.
         </Text>
