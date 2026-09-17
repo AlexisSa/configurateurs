@@ -21,14 +21,14 @@ export const CONFIGURATOR_METAS: ConfiguratorMeta[] = [
     slug: "cordon-rj45",
     title: "Cordons de brassage RJ45",
     description:
-      "Choisissez type, catégorie, couleur et longueur pour trouver le bon cordon.",
+      "Filtrez par type, catégorie, couleur, longueur et blindage pour trouver le cordon adapté.",
   },
   {
     id: "cable-rj45",
     slug: "cable-rj45",
     title: "Câble RJ45 informatique",
     description:
-      "Choisissez type, catégorie, blindage et gaine pour trouver le bon câble.",
+      "Filtrez par type, catégorie, couleur, blindage, gaine et nombre de paires.",
   },
 ];
 

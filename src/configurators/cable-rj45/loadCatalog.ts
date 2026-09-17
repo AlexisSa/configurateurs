@@ -1,3 +1,4 @@
+import { getCachedCatalog, setCachedCatalog } from "@/core/catalog/catalogCache";
 import { listCategorySubtree } from "@/core/catalog/categoryTree";
 import {
   PRODUCT_CATEGORY_EMBED,
@@ -12,7 +13,8 @@ import {
 import { mapProductRow, type CableProduct, type ProductFacet } from "./catalog";
 
 export const CABLE_CATEGORY_ROOT = "Câble RJ45 informatique";
-const PRODUCT_PAGE_SIZE = 100;
+const PRODUCT_PAGE_SIZE = 150;
+const CACHE_KEY = "cable-rj45";
 
 export type LoadCableCatalogResult =
   | { ok: true; products: CableProduct[] }
@@ -30,6 +32,9 @@ type ProductRow = {
 };
 
 export async function loadCableRj45Catalog(): Promise<LoadCableCatalogResult> {
+  const cached = getCachedCatalog<CableProduct[]>(CACHE_KEY);
+  if (cached) return { ok: true, products: cached };
+
   if (!isSupabaseConfigured()) {
     return {
       ok: false,
@@ -83,6 +88,7 @@ export async function loadCableRj45Catalog(): Promise<LoadCableCatalogResult> {
       a.label.localeCompare(b.label, "fr"),
     );
 
+    setCachedCatalog(CACHE_KEY, products);
     return { ok: true, products };
   } catch (err) {
     return {
@@ -123,20 +129,24 @@ async function fetchProductsByIds(
   client: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>,
   productIds: string[],
 ): Promise<ProductRow[]> {
-  const rows: ProductRow[] = [];
-
+  const batches: string[][] = [];
   for (let i = 0; i < productIds.length; i += PRODUCT_PAGE_SIZE) {
-    const batch = productIds.slice(i, i + PRODUCT_PAGE_SIZE);
-    const { data, error } = await client
-      .from("products")
-      .select(
-        `id, sku, name, oxatis_id, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
-      )
-      .in("id", batch);
-
-    if (error) throw new Error(error.message);
-    rows.push(...((data ?? []) as ProductRow[]));
+    batches.push(productIds.slice(i, i + PRODUCT_PAGE_SIZE));
   }
 
-  return rows;
+  const pages = await Promise.all(
+    batches.map(async (batch) => {
+      const { data, error } = await client
+        .from("products")
+        .select(
+          `id, sku, name, oxatis_id, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
+        )
+        .in("id", batch);
+
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ProductRow[];
+    }),
+  );
+
+  return pages.flat();
 }

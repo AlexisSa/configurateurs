@@ -1,3 +1,4 @@
+import { getCachedCatalog, setCachedCatalog } from "@/core/catalog/catalogCache";
 import { listCategorySubtree } from "@/core/catalog/categoryTree";
 import {
   PRODUCT_CATEGORY_EMBED,
@@ -13,7 +14,8 @@ import { mapProductRow, type ProductFacet, type Rj45Product } from "./catalog";
 
 export const CORDON_CATEGORY_ROOT = "Cordons de brassage RJ45";
 const SKIP_SUBTREE_NAMES = ["Liaisons pré-connectées cuivre"] as const;
-const PRODUCT_PAGE_SIZE = 100;
+const PRODUCT_PAGE_SIZE = 150;
+const CACHE_KEY = "cordon-rj45";
 
 export type LoadCordonCatalogResult =
   | { ok: true; products: Rj45Product[] }
@@ -31,6 +33,9 @@ type ProductRow = {
 };
 
 export async function loadCordonRj45Catalog(): Promise<LoadCordonCatalogResult> {
+  const cached = getCachedCatalog<Rj45Product[]>(CACHE_KEY);
+  if (cached) return { ok: true, products: cached };
+
   if (!isSupabaseConfigured()) {
     return {
       ok: false,
@@ -86,6 +91,7 @@ export async function loadCordonRj45Catalog(): Promise<LoadCordonCatalogResult> 
       a.label.localeCompare(b.label, "fr"),
     );
 
+    setCachedCatalog(CACHE_KEY, products);
     return { ok: true, products };
   } catch (err) {
     return {
@@ -126,20 +132,24 @@ async function fetchProductsByIds(
   client: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>,
   productIds: string[],
 ): Promise<ProductRow[]> {
-  const rows: ProductRow[] = [];
-
+  const batches: string[][] = [];
   for (let i = 0; i < productIds.length; i += PRODUCT_PAGE_SIZE) {
-    const batch = productIds.slice(i, i + PRODUCT_PAGE_SIZE);
-    const { data, error } = await client
-      .from("products")
-      .select(
-        `id, sku, name, oxatis_id, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
-      )
-      .in("id", batch);
-
-    if (error) throw new Error(error.message);
-    rows.push(...((data ?? []) as ProductRow[]));
+    batches.push(productIds.slice(i, i + PRODUCT_PAGE_SIZE));
   }
 
-  return rows;
+  const pages = await Promise.all(
+    batches.map(async (batch) => {
+      const { data, error } = await client
+        .from("products")
+        .select(
+          `id, sku, name, oxatis_id, qty_in_stock, image_url, facets, ${PRODUCT_CATEGORY_EMBED}`,
+        )
+        .in("id", batch);
+
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ProductRow[];
+    }),
+  );
+
+  return pages.flat();
 }

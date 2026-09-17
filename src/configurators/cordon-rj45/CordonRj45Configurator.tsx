@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
-import { Button, Card, Heading, Text } from "@/core/design-system";
+import { Button, Card, Heading, Spinner, Text } from "@/core/design-system";
 import type { StockStatus } from "@/core/payload/types";
 import { pickTierPrice } from "@/core/pricing/priceLevels";
 import { getStockStatus } from "@/core/stock/getStockStatus";
@@ -154,7 +154,7 @@ export function CordonRj45Configurator() {
 
       {catalog.status === "loading" && (
         <Card>
-          <Text muted>Chargement du catalogue…</Text>
+          <Spinner label="Chargement du catalogue…" />
         </Card>
       )}
 
