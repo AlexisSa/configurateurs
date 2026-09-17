@@ -56,7 +56,7 @@ export default function HomePage() {
             <li key={item.id}>
               <Link
                 href={`/configurators/${item.slug}${embedQuery}`}
-                className="group flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-zinc-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+                className="group flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-brand/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 <div
                   className={`flex items-center gap-4 border-b border-zinc-100 bg-gradient-to-br px-5 py-5 ${visual.accent}`}
@@ -86,7 +86,7 @@ export default function HomePage() {
                   <p className="text-sm leading-relaxed text-zinc-600">
                     {item.description}
                   </p>
-                  <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-zinc-900">
+                  <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-brand">
                     Ouvrir le configurateur
                     <span
                       aria-hidden

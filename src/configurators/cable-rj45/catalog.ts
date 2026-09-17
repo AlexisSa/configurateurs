@@ -18,12 +18,14 @@ export type CableProduct = {
   sheath: string | null;
   productType: string | null;
   pairCount: string | null;
+  euroclass: string | null;
   qtyInStock: number;
   imageUrl: string | null;
   prices: TierPriceMap;
 };
 
 export type CableFilters = {
+  euroclass: string | "all";
   category: string | "all";
   color: string | "all";
   shielding: string | "all";
@@ -33,6 +35,7 @@ export type CableFilters = {
 };
 
 export const DEFAULT_FILTERS: CableFilters = {
+  euroclass: "all",
   category: "all",
   color: "all",
   shielding: "all",
@@ -73,6 +76,7 @@ export function mapProductRow(row: {
     sheath: getFacetValue(facets, "Gaine"),
     productType: getFacetValue(facets, "Type de produit"),
     pairCount: getFacetValue(facets, "Nombre de paires"),
+    euroclass: getFacetValue(facets, "Euroclasse"),
     qtyInStock: Number(row.qty_in_stock ?? 0),
     imageUrl: row.image_url,
     prices: row.prices ?? {},
@@ -80,6 +84,7 @@ export function mapProductRow(row: {
 }
 
 export type CableFilterOptions = {
+  euroclasses: string[];
   categories: string[];
   colors: string[];
   shieldings: string[];
@@ -89,6 +94,7 @@ export type CableFilterOptions = {
 };
 
 const FILTER_KEYS = [
+  "euroclass",
   "category",
   "color",
   "shielding",
@@ -97,11 +103,34 @@ const FILTER_KEYS = [
   "pairCount",
 ] as const satisfies ReadonlyArray<keyof CableFilters>;
 
+/** Ordre du plus performant au moins performant (réaction au feu). */
+const EUROCLASS_RANK: Record<string, number> = {
+  Aca: 0,
+  B1ca: 1,
+  B2ca: 2,
+  Cca: 3,
+  Dca: 4,
+  Eca: 5,
+  Fca: 6,
+};
+
+function compareEuroclasses(a: string, b: string): number {
+  const ra = EUROCLASS_RANK[a] ?? 100;
+  const rb = EUROCLASS_RANK[b] ?? 100;
+  return ra - rb || a.localeCompare(b, "fr");
+}
+
 export function filterCableProducts(
   products: CableProduct[],
   filters: CableFilters,
 ): CableProduct[] {
   return products.filter((product) => {
+    if (
+      filters.euroclass !== "all" &&
+      product.euroclass !== filters.euroclass
+    ) {
+      return false;
+    }
     if (filters.category !== "all" && product.category !== filters.category) {
       return false;
     }
@@ -133,16 +162,25 @@ export function filterCableProducts(
   });
 }
 
-function uniqueSorted(values: Array<string | null>): string[] {
+function uniqueSorted(
+  values: Array<string | null>,
+  compare?: (a: string, b: string) => number,
+): string[] {
   const set = new Set<string>();
   for (const value of values) {
     if (value) set.add(value);
   }
-  return [...set].sort((a, b) => a.localeCompare(b, "fr"));
+  const list = [...set];
+  list.sort(compare ?? ((a, b) => a.localeCompare(b, "fr")));
+  return list;
 }
 
 export function buildFilterOptions(products: CableProduct[]): CableFilterOptions {
   return {
+    euroclasses: uniqueSorted(
+      products.map((p) => p.euroclass),
+      compareEuroclasses,
+    ),
     categories: uniqueSorted(products.map((p) => p.category)),
     colors: uniqueSorted(products.map((p) => p.color)),
     shieldings: uniqueSorted(products.map((p) => p.shielding)),
@@ -157,6 +195,9 @@ export function buildCompatibleFilterOptions(
   filters: CableFilters,
 ): CableFilterOptions {
   return {
+    euroclasses: buildFilterOptions(
+      filterCableProducts(products, { ...filters, euroclass: "all" }),
+    ).euroclasses,
     categories: buildFilterOptions(
       filterCableProducts(products, { ...filters, category: "all" }),
     ).categories,
@@ -183,6 +224,11 @@ function coerceFiltersToOptions(
   options: CableFilterOptions,
 ): CableFilters {
   return {
+    euroclass:
+      filters.euroclass === "all" ||
+      options.euroclasses.includes(filters.euroclass)
+        ? filters.euroclass
+        : "all",
     category:
       filters.category === "all" ||
       options.categories.includes(filters.category)

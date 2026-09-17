@@ -5,6 +5,7 @@ import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Button, Card, Heading, Spinner, Text } from "@/core/design-system";
+import { OxatisProductLink } from "@/core/oxatis/OxatisProductLink";
 import type { StockStatus } from "@/core/payload/types";
 import { pickTierPrice } from "@/core/pricing/priceLevels";
 import { getStockStatus } from "@/core/stock/getStockStatus";
@@ -36,7 +37,7 @@ type CatalogState =
  * Configurateur câble RJ45 informatique — catalogue = catégorie Oxatis.
  */
 export function CableRj45Configurator() {
-  const { pricingTierCode } = useClientContext();
+  const { pricingTierCode, isEmbed } = useClientContext();
   const { addToCart, status: cartStatus, resetStatus: resetCartStatus } =
     useAddToCart();
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
@@ -106,6 +107,7 @@ export function CableRj45Configurator() {
     : "unknown";
 
   const filtersAreDefault =
+    activeFilters.euroclass === "all" &&
     activeFilters.category === "all" &&
     activeFilters.color === "all" &&
     activeFilters.shielding === "all" &&
@@ -174,6 +176,46 @@ export function CableRj45Configurator() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start">
           <Card className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
             <Heading level={2}>Filtres</Heading>
+
+            {filterOptions.euroclasses.length > 0 && (
+              <div className="rounded-lg border border-brand/25 bg-brand-muted p-3">
+                <p className="text-sm font-semibold text-brand">Euroclasse</p>
+                <p className="mt-0.5 text-xs text-zinc-600">
+                  Classe de réaction au feu du câble
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateFilter("euroclass", "all")}
+                    className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition ${
+                      activeFilters.euroclass === "all"
+                        ? "border-brand bg-brand text-white"
+                        : "border-brand/30 bg-white text-brand hover:border-brand"
+                    }`}
+                  >
+                    Toutes
+                  </button>
+                  {filterOptions.euroclasses.map((value) => {
+                    const active = activeFilters.euroclass === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => updateFilter("euroclass", value)}
+                        className={`rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                          active
+                            ? "border-brand bg-brand text-white"
+                            : "border-brand/30 bg-white text-brand hover:border-brand"
+                        }`}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-3">
               <FilterSelect
                 label="Type de produit"
@@ -245,16 +287,19 @@ export function CableRj45Configurator() {
                       pricingTierCode,
                     );
                     return (
-                      <li key={product.sku}>
+                      <li
+                        key={product.sku}
+                        className={`flex items-stretch ${
+                          selected ? "bg-brand text-white" : "bg-white"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedSku(product.sku);
                           }}
-                          className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition ${
-                            selected
-                              ? "bg-zinc-900 text-white"
-                              : "bg-white hover:bg-zinc-50"
+                          className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left transition ${
+                            selected ? "text-white" : "hover:bg-zinc-50"
                           }`}
                         >
                           <ProductThumb
@@ -268,10 +313,13 @@ export function CableRj45Configurator() {
                             </span>
                             <span
                               className={`mt-0.5 block text-xs ${
-                                selected ? "text-zinc-300" : "text-zinc-500"
+                                selected ? "text-white/75" : "text-zinc-500"
                               }`}
                             >
                               {product.sku}
+                              {product.euroclass
+                                ? ` · ${product.euroclass}`
+                                : ""}
                               {product.category ? ` · ${product.category}` : ""}
                               {product.shielding
                                 ? ` · ${product.shielding}`
@@ -289,6 +337,13 @@ export function CableRj45Configurator() {
                             </span>
                           )}
                         </button>
+                        {product.oxatisId ? (
+                          <OxatisProductLink
+                            oxatisId={product.oxatisId}
+                            isEmbed={isEmbed}
+                            selected={selected}
+                          />
+                        ) : null}
                       </li>
                     );
                   })}
@@ -431,7 +486,7 @@ function ProductThumb({
   return (
     <span
       className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border ${
-        selected ? "border-zinc-600 bg-zinc-800" : "border-zinc-200 bg-zinc-50"
+        selected ? "border-brand/40 bg-brand/20" : "border-zinc-200 bg-zinc-50"
       }`}
     >
       {showImage ? (

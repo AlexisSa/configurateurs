@@ -14,7 +14,7 @@ import { mapProductRow, type CableProduct, type ProductFacet } from "./catalog";
 
 export const CABLE_CATEGORY_ROOT = "Câble RJ45 informatique";
 const PRODUCT_PAGE_SIZE = 150;
-const CACHE_KEY = "cable-rj45";
+const CACHE_KEY = "cable-rj45-v2";
 
 export type LoadCableCatalogResult =
   | { ok: true; products: CableProduct[] }

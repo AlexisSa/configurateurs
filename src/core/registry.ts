@@ -28,7 +28,7 @@ export const CONFIGURATOR_METAS: ConfiguratorMeta[] = [
     slug: "cable-rj45",
     title: "Câble RJ45 informatique",
     description:
-      "Filtrez par type, catégorie, couleur, blindage, gaine et nombre de paires.",
+      "Filtrez par euroclasse, type, catégorie, couleur, blindage, gaine et nombre de paires.",
   },
 ];
 

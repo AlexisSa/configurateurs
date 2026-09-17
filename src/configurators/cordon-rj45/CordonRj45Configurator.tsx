@@ -5,6 +5,7 @@ import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Button, Card, Heading, Spinner, Text } from "@/core/design-system";
+import { OxatisProductLink } from "@/core/oxatis/OxatisProductLink";
 import type { StockStatus } from "@/core/payload/types";
 import { pickTierPrice } from "@/core/pricing/priceLevels";
 import { getStockStatus } from "@/core/stock/getStockStatus";
@@ -38,7 +39,7 @@ type CatalogState =
  * Configurateur cordons de brassage RJ45 — catalogue = catégorie Oxatis.
  */
 export function CordonRj45Configurator() {
-  const { pricingTierCode } = useClientContext();
+  const { pricingTierCode, isEmbed } = useClientContext();
   const { addToCart, status: cartStatus, resetStatus: resetCartStatus } =
     useAddToCart();
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
@@ -241,16 +242,19 @@ export function CordonRj45Configurator() {
                       pricingTierCode,
                     );
                     return (
-                      <li key={product.sku}>
+                      <li
+                        key={product.sku}
+                        className={`flex items-stretch ${
+                          selected ? "bg-brand text-white" : "bg-white"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedSku(product.sku);
                           }}
-                          className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition ${
-                            selected
-                              ? "bg-zinc-900 text-white"
-                              : "bg-white hover:bg-zinc-50"
+                          className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left transition ${
+                            selected ? "text-white" : "hover:bg-zinc-50"
                           }`}
                         >
                           <ProductThumb
@@ -264,7 +268,7 @@ export function CordonRj45Configurator() {
                             </span>
                             <span
                               className={`mt-0.5 block text-xs ${
-                                selected ? "text-zinc-300" : "text-zinc-500"
+                                selected ? "text-white/75" : "text-zinc-500"
                               }`}
                             >
                               {product.sku}
@@ -283,6 +287,13 @@ export function CordonRj45Configurator() {
                             </span>
                           )}
                         </button>
+                        {product.oxatisId ? (
+                          <OxatisProductLink
+                            oxatisId={product.oxatisId}
+                            isEmbed={isEmbed}
+                            selected={selected}
+                          />
+                        ) : null}
                       </li>
                     );
                   })}
@@ -425,7 +436,7 @@ function ProductThumb({
   return (
     <span
       className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border ${
-        selected ? "border-zinc-600 bg-zinc-800" : "border-zinc-200 bg-zinc-50"
+        selected ? "border-brand/40 bg-brand/20" : "border-zinc-200 bg-zinc-50"
       }`}
     >
       {showImage ? (

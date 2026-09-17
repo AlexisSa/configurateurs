@@ -13,7 +13,7 @@ export function Spinner({
       className={`flex flex-col items-center justify-center gap-3 py-10 ${className}`}
     >
       <span
-        className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-800"
+        className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-brand"
         aria-hidden
       />
       <span className="text-sm text-zinc-500">{label}</span>

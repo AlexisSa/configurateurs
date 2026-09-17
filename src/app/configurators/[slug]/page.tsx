@@ -45,7 +45,7 @@ export default function ConfiguratorPage() {
       <header className="mb-4 flex items-center gap-3">
         <Link
           href={isEmbed ? "/?embed=1" : "/"}
-          className="shrink-0 rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 hover:text-zinc-900"
+            className="shrink-0 rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-800 hover:border-brand/40 hover:bg-brand-muted hover:text-brand"
         >
           ← Retour
         </Link>
