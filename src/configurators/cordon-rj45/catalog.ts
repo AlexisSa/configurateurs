@@ -12,6 +12,7 @@ export type ProductFacet = {
 export const STANDARD_CORDON_TYPE = "Standards";
 
 export type Rj45Product = {
+  id: string;
   sku: string;
   label: string;
   /** ID Oxatis (ItmID) pour le panier. */
@@ -66,6 +67,7 @@ export function resolveCordonType(
 }
 
 export function mapProductRow(row: {
+  id: string;
   sku: string;
   name: string;
   oxatis_id: number | null;
@@ -77,6 +79,7 @@ export function mapProductRow(row: {
   const facets = row.facets ?? [];
   const oxatisRaw = row.oxatis_id == null ? null : Number(row.oxatis_id);
   return {
+    id: row.id,
     sku: row.sku,
     label: row.name,
     oxatisId:

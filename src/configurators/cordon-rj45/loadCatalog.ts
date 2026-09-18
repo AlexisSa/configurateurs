@@ -15,7 +15,7 @@ import { mapProductRow, type ProductFacet, type Rj45Product } from "./catalog";
 export const CORDON_CATEGORY_ROOT = "Cordons de brassage RJ45";
 const SKIP_SUBTREE_NAMES = ["Liaisons pré-connectées cuivre"] as const;
 const PRODUCT_PAGE_SIZE = 150;
-const CACHE_KEY = "cordon-rj45";
+const CACHE_KEY = "cordon-rj45-v2";
 
 export type LoadCordonCatalogResult =
   | { ok: true; products: Rj45Product[] }

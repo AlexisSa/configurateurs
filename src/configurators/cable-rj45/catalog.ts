@@ -9,6 +9,7 @@ export type ProductFacet = {
 };
 
 export type CableProduct = {
+  id: string;
   sku: string;
   label: string;
   oxatisId: number | null;
@@ -53,6 +54,7 @@ export function getFacetValue(
 }
 
 export function mapProductRow(row: {
+  id: string;
   sku: string;
   name: string;
   oxatis_id: number | null;
@@ -64,6 +66,7 @@ export function mapProductRow(row: {
   const facets = row.facets ?? [];
   const oxatisRaw = row.oxatis_id == null ? null : Number(row.oxatis_id);
   return {
+    id: row.id,
     sku: row.sku,
     label: row.name,
     oxatisId:

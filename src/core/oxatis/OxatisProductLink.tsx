@@ -6,10 +6,12 @@ export function OxatisProductLink({
   oxatisId,
   isEmbed,
   selected = false,
+  className = "",
 }: {
   oxatisId: number;
   isEmbed: boolean;
   selected?: boolean;
+  className?: string;
 }) {
   return (
     <a
@@ -22,7 +24,7 @@ export function OxatisProductLink({
         selected
           ? "border-white/40 bg-white/15 text-white hover:bg-white/25"
           : "border-brand/30 bg-brand-muted text-brand hover:border-brand hover:bg-brand hover:text-white"
-      }`}
+      } ${className}`}
     >
       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
       Fiche

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CartNotification } from "@/core/cart/CartNotification";
 import { useAddToCart } from "@/core/cart/useAddToCart";
+import { ComplementaryProductsPanel } from "@/core/catalog/ComplementaryProductsPanel";
+import { SelectionPanel } from "@/core/catalog/SelectionPanel";
 import { useClientContext } from "@/core/client-context/ClientProvider";
-import { Button, Card, Heading, Spinner, Text } from "@/core/design-system";
+import { Button, Card, Heading, Spinner, StockPill, stockStatusFromQty, Text } from "@/core/design-system";
 import { OxatisProductLink } from "@/core/oxatis/OxatisProductLink";
 import type { StockStatus } from "@/core/payload/types";
 import { pickTierPrice } from "@/core/pricing/priceLevels";
@@ -20,12 +21,6 @@ import {
 import {
   loadCordonRj45Catalog,
 } from "./loadCatalog";
-
-const STOCK_LABEL: Record<StockStatus, string> = {
-  ok: "En stock",
-  partial: "Stock partiel ou insuffisant",
-  unknown: "Disponibilité à confirmer",
-};
 
 const selectClass =
   "w-full min-w-0 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900";
@@ -168,10 +163,25 @@ export function CordonRj45Configurator() {
       )}
 
       {catalog.status === "ready" && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start">
-          <Card className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
-            <Heading level={2}>Filtres</Heading>
-            <div className="grid gap-3">
+        <div className="flex flex-col gap-6">
+          <Card className="flex min-w-0 flex-col gap-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <Heading level={2}>Filtres</Heading>
+              <Button
+                variant="secondary"
+                onClick={resetFilters}
+                disabled={
+                  activeFilters.category === "all" &&
+                  activeFilters.color === "all" &&
+                  activeFilters.length === "all" &&
+                  activeFilters.shielding === "all" &&
+                  activeFilters.cordonType === "all"
+                }
+              >
+                Réinitialiser
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               <FilterSelect
                 label="Type de cordon"
                 value={activeFilters.cordonType}
@@ -211,30 +221,16 @@ export function CordonRj45Configurator() {
                   : `${filtered.length} références trouvées.`}{" "}
               ({products.length} au catalogue)
             </Text>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={resetFilters}
-              disabled={
-                activeFilters.category === "all" &&
-                activeFilters.color === "all" &&
-                activeFilters.length === "all" &&
-                activeFilters.shielding === "all" &&
-                activeFilters.cordonType === "all"
-              }
-            >
-              Réinitialiser les filtres
-            </Button>
           </Card>
 
-          <Card className="flex min-w-0 flex-col gap-4">
-            <Heading level={2}>Résultats</Heading>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
+            <Card className="flex min-w-0 flex-col gap-4">
+              <Heading level={2}>Résultats</Heading>
 
-            {filtered.length === 0 ? (
-              <Text muted>Aucun cordon ne correspond à ces filtres.</Text>
-            ) : (
-              <>
-                <ul className="max-h-[32rem] divide-y divide-zinc-200 overflow-y-auto rounded-md border border-zinc-200">
+              {filtered.length === 0 ? (
+                <Text muted>Aucun cordon ne correspond à ces filtres.</Text>
+              ) : (
+                <ul className="max-h-[40rem] divide-y divide-zinc-200 overflow-y-auto rounded-md border border-zinc-200">
                   {filtered.map((product) => {
                     const selected = product.sku === resolvedSku;
                     const price = pickTierPrice(
@@ -272,7 +268,9 @@ export function CordonRj45Configurator() {
                               }`}
                             >
                               {product.sku}
-                              {product.category ? ` · ${product.category}` : ""}
+                              {product.category
+                                ? ` · ${product.category}`
+                                : ""}
                               {product.length ? ` · ${product.length}` : ""}
                               {product.color ? ` · ${product.color}` : ""}
                             </span>
@@ -286,6 +284,12 @@ export function CordonRj45Configurator() {
                               {price.toFixed(2)} €
                             </span>
                           )}
+                          <StockPill
+                            compact
+                            selected={selected}
+                            status={stockStatusFromQty(product.qtyInStock)}
+                            qtyInStock={product.qtyInStock}
+                          />
                         </button>
                         {product.oxatisId ? (
                           <OxatisProductLink
@@ -298,96 +302,39 @@ export function CordonRj45Configurator() {
                     );
                   })}
                 </ul>
+              )}
+            </Card>
 
-                <div className="flex flex-col gap-4 border-t border-zinc-200 pt-4 sm:flex-row sm:items-end sm:justify-between">
-                  <label className="flex w-full max-w-[10rem] flex-col gap-1 text-sm">
-                    <span className="font-medium text-zinc-800">Quantité</span>
-                    <input
-                      type="number"
-                      min={1}
-                      className="rounded-md border border-zinc-300 px-3 py-2"
-                      value={quantity}
-                      onChange={(e) => {
-                        setQuantity(Number(e.target.value));
-                      }}
-                    />
-                  </label>
-
-                  <StockPill
-                    status={stockHint}
-                    qtyInStock={selectedProduct?.qtyInStock}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1 text-sm text-zinc-700">
-                  <p>
-                    <span className="text-zinc-500">Prix unitaire HT</span>
-                    <span className="mt-0.5 block text-base font-medium text-zinc-900 tabular-nums">
-                      {unitPrice == null ? "—" : `${unitPrice.toFixed(2)} €`}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-zinc-500">Total HT</span>
-                    <span className="mt-0.5 block text-base font-medium text-zinc-900 tabular-nums">
-                      {lineTotal == null ? "—" : `${lineTotal.toFixed(2)} €`}
-                    </span>
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={
-                    !selectedProduct?.oxatisId || cartStatus.state === "pending"
-                  }
-                >
-                  Ajouter au panier
-                </Button>
-                <CartNotification status={cartStatus} />
-                {!selectedProduct?.oxatisId && selectedProduct && (
+            <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4">
+              {selectedProduct ? (
+                <SelectionPanel
+                  label={selectedProduct.label}
+                  sku={selectedProduct.sku}
+                  imageUrl={selectedProduct.imageUrl}
+                  unitPrice={unitPrice}
+                  lineTotal={lineTotal}
+                  quantity={quantity}
+                  onQuantityChange={setQuantity}
+                  stockStatus={stockHint}
+                  qtyInStock={selectedProduct.qtyInStock}
+                  oxatisId={selectedProduct.oxatisId}
+                  isEmbed={isEmbed}
+                  onAddToCart={handleAddToCart}
+                  cartStatus={cartStatus}
+                />
+              ) : (
+                <Card>
                   <Text muted className="text-sm">
-                    Cette référence ne peut pas être ajoutée au panier pour le
-                    moment.
+                    Sélectionnez une référence pour afficher le panier.
                   </Text>
-                )}
-              </>
-            )}
-          </Card>
+                </Card>
+              )}
+              <ComplementaryProductsPanel productId={selectedProduct?.id} />
+            </div>
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-function StockPill({
-  status,
-  qtyInStock,
-}: {
-  status: StockStatus;
-  qtyInStock?: number;
-}) {
-  const styles: Record<StockStatus, string> = {
-    ok: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    partial: "border-amber-200 bg-amber-50 text-amber-900",
-    unknown: "border-zinc-200 bg-zinc-100 text-zinc-700",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-xs font-medium ${styles[status]}`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          status === "ok"
-            ? "bg-emerald-500"
-            : status === "partial"
-              ? "bg-amber-500"
-              : "bg-zinc-400"
-        }`}
-        aria-hidden
-      />
-      {STOCK_LABEL[status]}
-      {qtyInStock != null ? ` · ${qtyInStock}` : null}
-    </span>
   );
 }
 
@@ -435,8 +382,8 @@ function ProductThumb({
 
   return (
     <span
-      className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border ${
-        selected ? "border-brand/40 bg-brand/20" : "border-zinc-200 bg-zinc-50"
+      className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded border bg-white ${
+        selected ? "border-brand/40" : "border-zinc-200"
       }`}
     >
       {showImage ? (

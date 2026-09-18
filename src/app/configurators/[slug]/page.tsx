@@ -41,7 +41,7 @@ export default function ConfiguratorPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-4">
+    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4">
       <header className="mb-4 flex items-center gap-3">
         <Link
           href={isEmbed ? "/?embed=1" : "/"}
