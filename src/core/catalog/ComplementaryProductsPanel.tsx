@@ -10,7 +10,14 @@ import {
   type RelatedProduct,
 } from "@/core/catalog/fetchRelatedProducts";
 import { useClientContext } from "@/core/client-context/ClientProvider";
-import { Button, Card, Heading, Spinner, Text } from "@/core/design-system";
+import {
+  Button,
+  Card,
+  Heading,
+  QuantityStepper,
+  Spinner,
+  Text,
+} from "@/core/design-system";
 import { OxatisProductLink } from "@/core/oxatis/OxatisProductLink";
 import { getSupabaseBrowserClient } from "@/core/supabase/client";
 
@@ -31,15 +38,18 @@ export function ComplementaryProductsPanel({
   const { pricingTierCode, isEmbed } = useClientContext();
   const { addToCart, status: cartStatus, resetStatus } = useAddToCart();
   const [state, setState] = useState<LoadState>({ status: "idle" });
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!productId) {
       setState({ status: "idle" });
+      setQuantities({});
       return;
     }
 
     let cancelled = false;
     setState({ status: "loading" });
+    setQuantities({});
 
     const client = getSupabaseBrowserClient();
     if (!client) {
@@ -52,7 +62,11 @@ export function ComplementaryProductsPanel({
 
     fetchRelatedProducts(client, productId)
       .then((products) => {
-        if (!cancelled) setState({ status: "ready", products });
+        if (cancelled) return;
+        setState({ status: "ready", products });
+        setQuantities(
+          Object.fromEntries(products.map((product) => [product.id, 1])),
+        );
       })
       .catch((err) => {
         if (!cancelled) {
@@ -101,6 +115,12 @@ export function ComplementaryProductsPanel({
           <ul className="flex max-h-[36rem] flex-col gap-3 overflow-y-auto">
             {state.products.map((product) => {
               const price = relatedUnitPrice(product, pricingTierCode);
+              const quantity = quantities[product.id] ?? 1;
+              const lineTotal =
+                price == null
+                  ? null
+                  : price * Math.max(1, Math.floor(quantity) || 1);
+
               return (
                 <li
                   key={product.id}
@@ -116,11 +136,28 @@ export function ComplementaryProductsPanel({
                         {product.sku}
                       </p>
                       <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-900">
-                        {price == null ? "—" : `${price.toFixed(2)} € HT`}
+                        {price == null
+                          ? "—"
+                          : `${price.toFixed(2)} € HT`}
+                        {lineTotal != null && quantity > 1 ? (
+                          <span className="ml-1.5 font-medium text-brand">
+                            · {lineTotal.toFixed(2)} €
+                          </span>
+                        ) : null}
                       </p>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <QuantityStepper
+                      size="sm"
+                      value={quantity}
+                      onChange={(value) =>
+                        setQuantities((prev) => ({
+                          ...prev,
+                          [product.id]: value,
+                        }))
+                      }
+                    />
                     <Button
                       className="gap-1.5 !px-2.5 !py-1.5 text-xs"
                       disabled={
@@ -130,7 +167,10 @@ export function ComplementaryProductsPanel({
                         if (!product.oxatisId) return;
                         resetStatus();
                         addToCart([
-                          { productId: product.oxatisId, quantity: 1 },
+                          {
+                            productId: product.oxatisId,
+                            quantity,
+                          },
                         ]);
                       }}
                     >

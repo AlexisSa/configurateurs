@@ -2,7 +2,14 @@
 
 import { CartNotification } from "@/core/cart/CartNotification";
 import type { AddToCartStatus } from "@/core/cart/useAddToCart";
-import { Button, Card, Heading, StockPill, Text } from "@/core/design-system";
+import {
+  Button,
+  Card,
+  Heading,
+  QuantityStepper,
+  StockPill,
+  Text,
+} from "@/core/design-system";
 import { OxatisProductLink } from "@/core/oxatis/OxatisProductLink";
 import type { StockStatus } from "@/core/payload/types";
 import { useState } from "react";
@@ -56,16 +63,10 @@ export function SelectionPanel({
         </div>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <div className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-800">Quantité</span>
-        <input
-          type="number"
-          min={1}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2"
-          value={quantity}
-          onChange={(e) => onQuantityChange(Number(e.target.value))}
-        />
-      </label>
+        <QuantityStepper value={quantity} onChange={onQuantityChange} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3">
         <div className="text-sm">
