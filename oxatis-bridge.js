@@ -2,14 +2,16 @@
  * oxatis-bridge.js — à coller sur xeilom.fr
  * Design → Code personnalisé → Fin de page (toutes les pages)
  *
- * Reçoit XEILOM_ADD_TO_CART depuis l’iframe configurateurs et appelle
- * l’API panier Oxatis native, puis renvoie XEILOM_ADD_TO_CART_RESULT.
+ * 1. Panier : reçoit XEILOM_ADD_TO_CART depuis l’iframe configurateurs.
+ * 2. Tarif : répond à coffret-request-context avec le catid Oxatis du client connecté.
  */
 (function () {
   "use strict";
 
   var ADD_TYPE = "XEILOM_ADD_TO_CART";
   var RESULT_TYPE = "XEILOM_ADD_TO_CART_RESULT";
+  var CONTEXT_TYPE = "coffret-context";
+  var REQUEST_CONTEXT_TYPE = "coffret-request-context";
   var AJAX_GAP_MS = 400;
 
   /** Origines iframe autorisées (schéma + host, sans chemin). */
@@ -28,6 +30,51 @@
 
   function isAllowedOrigin(origin) {
     return allowedOrigins().indexOf(origin) !== -1;
+  }
+
+  function getOxatisCategoryId() {
+    var user = window.oxInfos && window.oxInfos.oxUser;
+    if (!user || !user.catid || !user.catid.length) return null;
+    return user.catid[0];
+  }
+
+  function sendPricingContext(target, origin) {
+    if (!target || !origin) return;
+    var categoryId = getOxatisCategoryId();
+    if (categoryId == null) return;
+    try {
+      target.postMessage(
+        { type: CONTEXT_TYPE, categoryId: categoryId },
+        origin,
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  /** Pousse le catid vers toutes les iframes configurateurs déjà chargées. */
+  function broadcastPricingContext() {
+    var categoryId = getOxatisCategoryId();
+    if (categoryId == null) return;
+    var frames = document.querySelectorAll("iframe");
+    for (var i = 0; i < frames.length; i++) {
+      var frame = frames[i];
+      try {
+        var src = frame.src || "";
+        var allowed = false;
+        for (var j = 0; j < PROD_ORIGINS.length; j++) {
+          if (src.indexOf(PROD_ORIGINS[j]) === 0) allowed = true;
+        }
+        for (var k = 0; k < DEV_ORIGINS.length; k++) {
+          if (src.indexOf(DEV_ORIGINS[k]) === 0) allowed = true;
+        }
+        if (!allowed || !frame.contentWindow) continue;
+        var origin = new URL(src).origin;
+        sendPricingContext(frame.contentWindow, origin);
+      } catch (e) {
+        /* ignore cross-origin / invalid src */
+      }
+    }
   }
 
   function normalizeItems(data) {
@@ -178,5 +225,27 @@
       });
   }
 
-  window.addEventListener("message", handleAddToCart);
+  function handleMessage(event) {
+    var data = event.data;
+    if (!data || !data.type) return;
+
+    if (data.type === REQUEST_CONTEXT_TYPE) {
+      if (!isAllowedOrigin(event.origin)) return;
+      sendPricingContext(event.source, event.origin);
+      return;
+    }
+
+    handleAddToCart(event);
+  }
+
+  window.addEventListener("message", handleMessage);
+
+  // oxInfos.catid arrive souvent après le premier paint / load iframe
+  broadcastPricingContext();
+  var attempts = 0;
+  var retryTimer = setInterval(function () {
+    broadcastPricingContext();
+    attempts += 1;
+    if (attempts >= 20) clearInterval(retryTimer);
+  }, 500);
 })();

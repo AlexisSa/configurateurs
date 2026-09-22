@@ -26,12 +26,10 @@ function ConfiguratorSlot({ slug }: { slug: string }) {
 function buildHubHref(ctx: {
   isEmbed: boolean;
   categoryId: string | null;
-  pricingTierCode: string;
 }): string {
   const q = new URLSearchParams();
   if (ctx.isEmbed) q.set("embed", "1");
   if (ctx.categoryId) q.set("categoryId", ctx.categoryId);
-  if (ctx.pricingTierCode) q.set("pricingTier", ctx.pricingTierCode);
   const qs = q.toString();
   return qs ? `/?${qs}` : "/";
 }
@@ -39,7 +37,7 @@ function buildHubHref(ctx: {
 export default function ConfiguratorPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
-  const { isEmbed, categoryId, pricingTierCode } = useClientContext();
+  const { isEmbed, categoryId } = useClientContext();
   const meta = getConfiguratorMeta(slug);
 
   if (!meta) {
@@ -60,7 +58,7 @@ export default function ConfiguratorPage() {
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4">
       <header className="mb-4 flex items-center gap-3">
         <Link
-          href={buildHubHref({ isEmbed, categoryId, pricingTierCode })}
+          href={buildHubHref({ isEmbed, categoryId })}
           className="shrink-0 rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-sm font-medium text-zinc-800 hover:border-brand/40 hover:bg-brand-muted hover:text-brand"
         >
           ← Retour

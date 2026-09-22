@@ -33,19 +33,19 @@ const CONFIGURATOR_VISUAL: Record<
 
 function buildConfiguratorHref(
   slug: string,
-  ctx: { isEmbed: boolean; categoryId: string | null; pricingTierCode: string },
+  ctx: { isEmbed: boolean; categoryId: string | null },
 ): string {
   const params = new URLSearchParams();
   if (ctx.isEmbed) params.set("embed", "1");
+  // Uniquement categoryId (source Oxatis). Ne jamais forcer pricingTier=S :
+  // ça écraserait un catid B reçu plus tard via postMessage après navigation.
   if (ctx.categoryId) params.set("categoryId", ctx.categoryId);
-  // Toujours propager le palier (évite de retomber sur S si le postMessage parent est perdu).
-  if (ctx.pricingTierCode) params.set("pricingTier", ctx.pricingTierCode);
   const qs = params.toString();
   return qs ? `/configurators/${slug}?${qs}` : `/configurators/${slug}`;
 }
 
 export default function HomePage() {
-  const { isEmbed, categoryId, pricingTierCode } = useClientContext();
+  const { isEmbed, categoryId } = useClientContext();
 
   return (
     <main
@@ -76,7 +76,6 @@ export default function HomePage() {
                 href={buildConfiguratorHref(item.slug, {
                   isEmbed,
                   categoryId,
-                  pricingTierCode,
                 })}
                 className="group flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-brand/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >

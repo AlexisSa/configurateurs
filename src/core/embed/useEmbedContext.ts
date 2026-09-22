@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { isAllowedEmbedOrigin } from "./embedOrigins";
 import {
   EMBED_CONTEXT_MESSAGE_TYPE,
@@ -59,6 +66,8 @@ export function useEmbedContext(): {
     pricingTierCode: PricingTierCode;
     categoryId: string | null;
   } | null>(null);
+  const fromParentRef = useRef(fromParent);
+  fromParentRef.current = fromParent;
 
   const applyContext = useCallback((message: EmbedContextMessage) => {
     if (message.pricingTier && isPricingTierCode(message.pricingTier.toUpperCase())) {
@@ -68,7 +77,7 @@ export function useEmbedContext(): {
       });
       return;
     }
-    if (message.categoryId != null) {
+    if (message.categoryId != null && String(message.categoryId).trim() !== "") {
       setFromParent({
         categoryId: String(message.categoryId),
         pricingTierCode: resolvePricingTierCode(message.categoryId),
@@ -86,11 +95,26 @@ export function useEmbedContext(): {
 
     window.addEventListener("message", onMessage);
 
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: EMBED_REQUEST_CONTEXT_MESSAGE_TYPE }, "*");
+    function requestContext() {
+      if (fromParentRef.current) return;
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          { type: EMBED_REQUEST_CONTEXT_MESSAGE_TYPE },
+          "*",
+        );
+      }
     }
 
-    return () => window.removeEventListener("message", onMessage);
+    // oxInfos.catid côté parent est souvent dispo après le 1er paint
+    requestContext();
+    const timers = [400, 1000, 2000, 4000, 8000].map((ms) =>
+      window.setTimeout(requestContext, ms),
+    );
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      timers.forEach((id) => window.clearTimeout(id));
+    };
   }, [applyContext]);
 
   return {
