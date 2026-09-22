@@ -34,6 +34,22 @@ getStockStatus(refs) → public.products (sku, qty_in_stock)
 getSupabaseLinkStatus() → badge UI hub
 ```
 
+### Coffrets de communication (`coffret-com`)
+
+Contrairement aux filtres facettes (cordons / câbles), ce module suit le flux **BOM** du [GUIDE-REPRODUCTION.md](./GUIDE-REPRODUCTION.md) :
+
+```
+catalog.json (structure métier)
+  → ConfigState → compatibility → bomBuilder
+  → prix DB : table `chassis` (châssis) + `products`/`product_prices` (options)
+  → ConfigPayload + export PDF (@/core/pdf)
+```
+
+- BOM calculable dès gamme + matériau ; readiness devis = au moins une option non-défaut.
+- `coffretCount` multiplie les **totaux** (et qty PDF), pas les lignes BOM unitaires.
+- Pas de panier Oxatis sur ce flux — sortie = [export PDF partagé](./EXPORT-PDF-CONFIGURATEURS.md).
+- Catalogue structurel versionné dans le module ; tarifs / stock via Supabase.
+
 Projet lié : **Product DB** (`products` ~6k lignes, `qty_in_stock`, prix dans `product_prices`).
 
 **Règle catalogue :** ne jamais inclure les produits rattachés à la catégorie **Anciens Produits** (`product_categories` → `categories`).  

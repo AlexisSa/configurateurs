@@ -30,6 +30,13 @@ export const CONFIGURATOR_METAS: ConfiguratorMeta[] = [
     description:
       "Filtrez par euroclasse, type, catégorie, couleur, blindage, gaine et nombre de paires.",
   },
+  {
+    id: "coffret-com",
+    slug: "coffret-com",
+    title: "Coffrets de communication",
+    description:
+      "Composez un coffret XH'system (gamme, matériau, options) et générez la nomenclature multi-références.",
+  },
 ];
 
 export function getConfiguratorMeta(slug: string): ConfiguratorMeta | undefined {

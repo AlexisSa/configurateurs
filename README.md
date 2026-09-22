@@ -15,7 +15,10 @@ npm run dev
 - Hub : [http://localhost:3000](http://localhost:3000)
 - Cordons de brassage RJ45 : [http://localhost:3000/configurators/cordon-rj45](http://localhost:3000/configurators/cordon-rj45)
 - Câble RJ45 informatique : [http://localhost:3000/configurators/cable-rj45](http://localhost:3000/configurators/cable-rj45)
+- Coffrets de communication : [http://localhost:3000/configurators/coffret-com](http://localhost:3000/configurators/coffret-com)
 - Simulateur iframe Oxatis : [http://localhost:3000/embed-test.html](http://localhost:3000/embed-test.html)
+
+Export PDF (tous configurateurs) : [docs/EXPORT-PDF-CONFIGURATEURS.md](docs/EXPORT-PDF-CONFIGURATEURS.md).
 
 ## Structure
 

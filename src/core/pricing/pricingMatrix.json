@@ -15,5 +15,265 @@
       "Z": "Tarif 6 (Price6VATExcluded)"
     }
   },
-  "skus": {}
+  "skus": {
+    "XHG3T": {
+      "S": 11.81,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3M": {
+      "S": 14.76,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3M-E": {
+      "S": 14.76,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3MX": {
+      "S": 33.81,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3ML": {
+      "S": 29.1,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3ML-E": {
+      "S": 29.1,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3MXL": {
+      "S": 32.67,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3MXL-E": {
+      "S": 32.67,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3S": {
+      "S": 16.9,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3SX": {
+      "S": 21.9,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3L": {
+      "S": 27.36,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3XL": {
+      "S": 29.79,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3M2": {
+      "S": 20.43,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XHG3M2L": {
+      "S": 36.45,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "KJ6AFSEF1": {
+      "S": 4.14,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "KJ6AFSEF1-24": {
+      "S": 99.36,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "CR6ASSTPOH0.5GS": {
+      "S": 2.43,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "DTIMP4RJ45": {
+      "S": 21.5,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "DTIO2": {
+      "S": 16.83,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "DTIO4": {
+      "S": 16.83,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "SPLITF-2": {
+      "S": 3.44,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "SPLITF-3": {
+      "S": 4.56,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "SPLITF-4": {
+      "S": 5.46,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "SPLITF-6": {
+      "S": 11.13,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "SPLITF-8": {
+      "S": 12.74,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "BMT-PRD": {
+      "S": 3.09,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "PC45X45": {
+      "S": 4.14,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-ET-LXL": {
+      "S": 13.87,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-ETEXTL": {
+      "S": 20.8,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-ETEXTL-1PC": {
+      "S": 26.74,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-ETEXTL-2PC": {
+      "S": 31.2,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-S-CAPOT": {
+      "S": 26.66,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-SX-CAPOT": {
+      "S": 38.63,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-L-PORTE-HQ": {
+      "S": 23.7,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "CR503S78-0.5": {
+      "S": 8.37,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-S-REH": {
+      "S": 45.24,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    },
+    "XH-SX-REH": {
+      "S": 32.41,
+      "M": null,
+      "B": null,
+      "A": null,
+      "Z": null
+    }
+  }
 }
