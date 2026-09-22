@@ -106,7 +106,7 @@ function drawContainedImage(
   }
   const ox = x + (frame - w) / 2;
   const oy = y + (frame - h) / 2;
-  pdf.addImage(asset.dataUrl, "PNG", ox, oy, w, h);
+  pdf.addImage(asset.dataUrl, asset.format ?? "PNG", ox, oy, w, h);
 }
 
 function drawCol(doc: jsPDF, col: Col, y: number, text: string) {

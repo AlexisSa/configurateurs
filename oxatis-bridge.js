@@ -4,6 +4,7 @@
  *
  * 1. Panier : reçoit XEILOM_ADD_TO_CART depuis l’iframe configurateurs.
  * 2. Tarif : répond à coffret-request-context avec le catid Oxatis du client connecté.
+ * 3. Images PDF : répond à coffret-fetch-image (fetch /Files/ côté parent).
  */
 (function () {
   "use strict";
@@ -12,6 +13,8 @@
   var RESULT_TYPE = "XEILOM_ADD_TO_CART_RESULT";
   var CONTEXT_TYPE = "coffret-context";
   var REQUEST_CONTEXT_TYPE = "coffret-request-context";
+  var FETCH_IMAGE_TYPE = "coffret-fetch-image";
+  var FETCH_IMAGE_RESULT_TYPE = "coffret-fetch-image-result";
   var AJAX_GAP_MS = 400;
 
   /** Origines iframe autorisées (schéma + host, sans chemin). */
@@ -75,6 +78,68 @@
         /* ignore cross-origin / invalid src */
       }
     }
+  }
+
+  function isXeilomImageUrl(url) {
+    try {
+      var host = new URL(url).hostname;
+      return host === "xeilom.fr" || host.slice(-10) === ".xeilom.fr";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Fetch image côté parent (même origine xeilom.fr) → data URL pour le PDF iframe.
+   * Contourne le 403 Cloudflare quand Vercel tente de télécharger /Files/.
+   */
+  function handleFetchImage(event) {
+    var data = event.data;
+    if (!data || data.type !== FETCH_IMAGE_TYPE) return;
+    if (!isAllowedOrigin(event.origin)) return;
+
+    var requestId = data.requestId;
+    var url = data.url;
+    if (!requestId || !url || !isXeilomImageUrl(url)) {
+      reply(event.source, event.origin, {
+        type: FETCH_IMAGE_RESULT_TYPE,
+        requestId: requestId,
+        dataUrl: null,
+        error: "url interdite",
+      });
+      return;
+    }
+
+    fetch(url, { credentials: "omit", cache: "force-cache" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("http " + response.status);
+        return response.blob();
+      })
+      .then(function (blob) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () {
+            resolve(reader.result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      })
+      .then(function (dataUrl) {
+        reply(event.source, event.origin, {
+          type: FETCH_IMAGE_RESULT_TYPE,
+          requestId: requestId,
+          dataUrl: dataUrl,
+        });
+      })
+      .catch(function () {
+        reply(event.source, event.origin, {
+          type: FETCH_IMAGE_RESULT_TYPE,
+          requestId: requestId,
+          dataUrl: null,
+          error: "fetch échoué",
+        });
+      });
   }
 
   function normalizeItems(data) {
@@ -232,6 +297,11 @@
     if (data.type === REQUEST_CONTEXT_TYPE) {
       if (!isAllowedOrigin(event.origin)) return;
       sendPricingContext(event.source, event.origin);
+      return;
+    }
+
+    if (data.type === FETCH_IMAGE_TYPE) {
+      handleFetchImage(event);
       return;
     }
 

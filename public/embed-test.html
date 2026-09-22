@@ -79,6 +79,47 @@
             sendPricingContext();
             return;
           }
+          if (event.data.type === "coffret-fetch-image") {
+            var requestId = event.data.requestId;
+            var url = event.data.url;
+            if (!requestId || !url) return;
+            fetch(url, { credentials: "omit" })
+              .then(function (r) {
+                if (!r.ok) throw new Error("http");
+                return r.blob();
+              })
+              .then(function (blob) {
+                return new Promise(function (resolve, reject) {
+                  var reader = new FileReader();
+                  reader.onload = function () {
+                    resolve(reader.result);
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+              })
+              .then(function (dataUrl) {
+                frame.contentWindow.postMessage(
+                  {
+                    type: "coffret-fetch-image-result",
+                    requestId: requestId,
+                    dataUrl: dataUrl,
+                  },
+                  IFRAME_ORIGIN
+                );
+              })
+              .catch(function () {
+                frame.contentWindow.postMessage(
+                  {
+                    type: "coffret-fetch-image-result",
+                    requestId: requestId,
+                    dataUrl: null,
+                  },
+                  IFRAME_ORIGIN
+                );
+              });
+            return;
+          }
           if (event.data.type === "coffret-resize" && event.data.height > 0) {
             frame.style.height = event.data.height + "px";
           }
