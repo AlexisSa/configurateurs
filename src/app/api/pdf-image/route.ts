@@ -8,7 +8,7 @@ const ALLOWED_HOSTS = new Set([
 
 /**
  * Proxy image same-origin — les CDN Oxatis n’envoient pas de CORS,
- * donc jsPDF / canvas ne peuvent pas charger les URLs directement.
+ * et Cloudflare refuse les fetch serverless sans User-Agent navigateur.
  *
  * GET /api/pdf-image?url=https://www.xeilom.fr/...
  */
@@ -35,9 +35,15 @@ export async function GET(request: Request) {
 
   try {
     const upstream = await fetch(target.toString(), {
-      headers: { Accept: "image/*,*/*" },
-      // Pas de credentials : image publique catalogue
+      headers: {
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        // Cloudflare (xeilom.fr) renvoie 403 sans UA navigateur depuis Vercel.
+        "User-Agent":
+          "Mozilla/5.0 (compatible; XeilomConfigurateurs/1.0; +https://configurateurs.vercel.app)",
+        Referer: "https://www.xeilom.fr/",
+      },
       cache: "force-cache",
+      redirect: "follow",
     });
 
     if (!upstream.ok) {
@@ -56,7 +62,7 @@ export async function GET(request: Request) {
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": contentType.split(";")[0]!.trim(),
         "Cache-Control": "public, max-age=86400, immutable",
       },
     });
