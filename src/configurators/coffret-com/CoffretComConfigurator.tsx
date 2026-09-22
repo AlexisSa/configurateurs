@@ -57,8 +57,7 @@ export function CoffretComConfigurator() {
     <div className="flex w-full flex-col gap-4">
       <div>
         <Text className="text-sm text-zinc-600">
-          XH&apos;system · Grade 3 TV · Tarif{" "}
-          {getPricingTierLabel(pricingTierCode)}
+          XH&apos;system · Grade 3 TV · {getPricingTierLabel(pricingTierCode)}
         </Text>
       </div>
 

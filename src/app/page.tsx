@@ -23,11 +23,29 @@ const CONFIGURATOR_VISUAL: Record<
     image: "https://www.xeilom.fr/Files/126457/Img/20/UK310100_1.png",
     imageAlt: "Câble informatique Cat. 6A — UK310100",
   },
+  "coffret-com": {
+    accent: "from-amber-50 to-white",
+    label: "Coffrets",
+    image: "https://www.xeilom.fr/Files/126457/Img/08/XHG3M-4RJ_1.jpg",
+    imageAlt: "Coffret de communication M-250 Grade 3 — XHG3M-4RJ",
+  },
 };
 
+function buildConfiguratorHref(
+  slug: string,
+  ctx: { isEmbed: boolean; categoryId: string | null; pricingTierCode: string },
+): string {
+  const params = new URLSearchParams();
+  if (ctx.isEmbed) params.set("embed", "1");
+  if (ctx.categoryId) params.set("categoryId", ctx.categoryId);
+  // Toujours propager le palier (évite de retomber sur S si le postMessage parent est perdu).
+  if (ctx.pricingTierCode) params.set("pricingTier", ctx.pricingTierCode);
+  const qs = params.toString();
+  return qs ? `/configurators/${slug}?${qs}` : `/configurators/${slug}`;
+}
+
 export default function HomePage() {
-  const { isEmbed } = useClientContext();
-  const embedQuery = isEmbed ? "?embed=1" : "";
+  const { isEmbed, categoryId, pricingTierCode } = useClientContext();
 
   return (
     <main
@@ -55,7 +73,11 @@ export default function HomePage() {
           return (
             <li key={item.id}>
               <Link
-                href={`/configurators/${item.slug}${embedQuery}`}
+                href={buildConfiguratorHref(item.slug, {
+                  isEmbed,
+                  categoryId,
+                  pricingTierCode,
+                })}
                 className="group flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-brand/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 <div
