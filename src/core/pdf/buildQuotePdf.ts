@@ -18,13 +18,31 @@ const COLORS = {
 
 type Rgb = (typeof COLORS)[keyof typeof COLORS];
 
+type Col = { x: number; w: number; align?: "left" | "center" | "right" };
+
+type TableLayout = {
+  img: Col;
+  ref: Col;
+  label: Col;
+  qty: Col;
+  unit: Col;
+  total: Col;
+};
+
 const MARGIN = 14;
 const PAGE_W = 210;
 const CONTENT_W = PAGE_W - MARGIN * 2;
+const CONTENT_RIGHT = MARGIN + CONTENT_W;
 const FOOTER_Y = 285;
 const BODY_BOTTOM = 268;
-const IMG_COL_W = 16;
-const IMG_FRAME = 12;
+const TABLE_PAD = 3;
+const TABLE_LEFT = MARGIN + TABLE_PAD;
+const TABLE_RIGHT = CONTENT_RIGHT - TABLE_PAD;
+const COL_GAP = 3;
+const IMG_COL_W = 18;
+const IMG_FRAME = 14;
+const IMG_PAD = 1.2;
+const LINE_H = 4.2;
 
 function setFill(doc: jsPDF, c: Rgb) {
   doc.setFillColor(c.r, c.g, c.b);
@@ -34,6 +52,10 @@ function setText(doc: jsPDF, c: Rgb) {
 }
 function setDraw(doc: jsPDF, c: Rgb) {
   doc.setDrawColor(c.r, c.g, c.b);
+}
+
+function textW(doc: jsPDF, text: string): number {
+  return doc.getTextWidth(text);
 }
 
 /** Prix lisibles jsPDF (virgule FR, pas d’espace fine Unicode). */
@@ -87,6 +109,73 @@ function drawContainedImage(
   pdf.addImage(asset.dataUrl, "PNG", ox, oy, w, h);
 }
 
+function drawCol(doc: jsPDF, col: Col, y: number, text: string) {
+  const align = col.align ?? "left";
+  const x =
+    align === "right"
+      ? col.x + col.w
+      : align === "center"
+        ? col.x + col.w / 2
+        : col.x;
+  doc.text(text, x, y, { align });
+}
+
+/**
+ * Colonnes mesurées pour éviter tout chevauchement SKU / libellé / prix.
+ */
+function measureTableLayout(doc: jsPDF, lines: PdfQuoteLine[]): TableLayout {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  let refW = textW(doc, "RÉF.");
+  for (const line of lines) {
+    refW = Math.max(refW, textW(doc, line.ref) + 6);
+  }
+  refW = Math.min(Math.max(refW, 22), 40);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  let qtyW = textW(doc, "QTÉ");
+  for (const line of lines) {
+    qtyW = Math.max(qtyW, textW(doc, String(line.qty)));
+  }
+  qtyW = Math.max(qtyW + 4, 10);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  let unitW = textW(doc, "PU HT");
+  let totalW = textW(doc, "TOTAL HT");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  for (const line of lines) {
+    unitW = Math.max(unitW, textW(doc, formatPdfPrice(line.unitPriceHT)));
+    doc.setFont("helvetica", "bold");
+    totalW = Math.max(totalW, textW(doc, formatPdfPrice(line.lineTotalHT)));
+    doc.setFont("helvetica", "normal");
+  }
+  unitW += 4;
+  totalW += 4;
+
+  const total: Col = { x: TABLE_RIGHT - totalW, w: totalW, align: "right" };
+  const unit: Col = {
+    x: total.x - COL_GAP - unitW,
+    w: unitW,
+    align: "right",
+  };
+  const qty: Col = {
+    x: unit.x - COL_GAP - qtyW,
+    w: qtyW,
+    align: "right",
+  };
+  const img: Col = { x: TABLE_LEFT, w: IMG_COL_W };
+  const ref: Col = { x: img.x + img.w + COL_GAP, w: refW };
+  const label: Col = {
+    x: ref.x + ref.w + COL_GAP,
+    w: Math.max(18, qty.x - COL_GAP - (ref.x + ref.w + COL_GAP)),
+  };
+
+  return { img, ref, label, qty, unit, total };
+}
+
 /**
  * Génère un Blob PDF (charge les images distantes si présentes).
  */
@@ -128,19 +217,21 @@ function drawHeader(
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
-  const titleWidth = pdf.getTextWidth(doc.title);
-  pdf.text(doc.title, PAGE_W - MARGIN - titleWidth, 12);
+  const titleLines = pdf.splitTextToSize(doc.title, 90) as string[];
+  pdf.text(titleLines, PAGE_W - MARGIN, 11, { align: "right" });
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   const dateLabel = formatIssuedAt(doc.issuedAt);
-  const dateWidth = pdf.getTextWidth(dateLabel);
-  pdf.text(dateLabel, PAGE_W - MARGIN - dateWidth, 17.5);
+  pdf.text(dateLabel, PAGE_W - MARGIN, 11 + titleLines.length * 4.2, {
+    align: "right",
+  });
 
   let y = 36;
   const hero = doc.heroImageUrl ? images.get(doc.heroImageUrl) : null;
   const heroSize = 28;
   const textLeft = hero ? MARGIN + heroSize + 6 : MARGIN;
+  const textMaxW = CONTENT_W - (hero ? heroSize + 6 : 0);
 
   if (hero) {
     setFill(pdf, COLORS.surface);
@@ -150,20 +241,28 @@ function drawHeader(
     drawContainedImage(pdf, hero, MARGIN + 2, y, heroSize - 4);
   }
 
+  let textY = y + 6;
   if (doc.subtitle) {
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
+    pdf.setFontSize(12);
     setText(pdf, COLORS.text);
-    pdf.text(doc.subtitle, textLeft, y + 6);
+    const subLines = pdf.splitTextToSize(doc.subtitle, textMaxW) as string[];
+    pdf.text(subLines, textLeft, textY);
+    textY += subLines.length * 5;
   }
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   setText(pdf, COLORS.muted);
   const tariff = doc.tariffLabel ?? `Grille ${doc.clientTariffCode}`;
-  pdf.text(`${tariff}  ·  ${doc.configuratorId}`, textLeft, y + 12);
+  const tariffLines = pdf.splitTextToSize(
+    `${tariff}  ·  ${doc.configuratorId}`,
+    textMaxW,
+  ) as string[];
+  pdf.text(tariffLines, textLeft, textY);
 
-  return y + (hero ? heroSize + 6 : 10);
+  const textBlockH = textY - y + tariffLines.length * 4 + 2;
+  return y + Math.max(hero ? heroSize + 4 : 8, textBlockH) + 4;
 }
 
 function drawMeta(
@@ -173,9 +272,22 @@ function drawMeta(
 ): number {
   if (!doc.meta?.length) return startY;
 
-  const rows = doc.meta;
+  const labelW = 48;
+  const valueMaxW = CONTENT_W - labelW - 12;
   const lineH = 5.5;
-  const boxH = 8 + rows.length * lineH;
+
+  const measured = doc.meta.map((entry) => {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    const valueLines = pdf.splitTextToSize(entry.value, valueMaxW) as string[];
+    return {
+      entry,
+      valueLines,
+      h: Math.max(lineH, valueLines.length * 4.2),
+    };
+  });
+
+  const boxH = 6 + measured.reduce((sum, row) => sum + row.h, 0) + 2;
   let y = ensureSpace(pdf, startY, boxH + 4);
 
   setFill(pdf, COLORS.brandTint);
@@ -184,25 +296,38 @@ function drawMeta(
   pdf.roundedRect(MARGIN, y, CONTENT_W, boxH, 1.5, 1.5, "FD");
 
   let rowY = y + 6;
-  for (const entry of rows) {
+  for (const row of measured) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
     setText(pdf, COLORS.muted);
-    pdf.text(entry.label.toUpperCase(), MARGIN + 4, rowY);
+    pdf.text(row.entry.label.toUpperCase(), MARGIN + 4, rowY);
 
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     setText(pdf, COLORS.text);
-    const labelW = 48;
-    const valueLines = pdf.splitTextToSize(
-      entry.value,
-      CONTENT_W - labelW - 10,
-    ) as string[];
-    pdf.text(valueLines, MARGIN + 4 + labelW, rowY);
-    rowY += Math.max(lineH, valueLines.length * 4);
+    pdf.text(row.valueLines, MARGIN + 4 + labelW, rowY);
+    rowY += row.h;
   }
 
   return y + boxH + 6;
+}
+
+function measureRowHeight(
+  pdf: jsPDF,
+  line: PdfQuoteLine,
+  layout: TableLayout,
+): number {
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  const labelLines = pdf.splitTextToSize(line.label, layout.label.w) as string[];
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(6.5);
+  const skuLines = pdf.splitTextToSize(line.ref, layout.ref.w - 4) as string[];
+  const contentH = Math.max(
+    skuLines.length * 3.6 + 4,
+    labelLines.length * LINE_H + 2,
+  );
+  return Math.max(IMG_FRAME + 4, contentH);
 }
 
 function drawTable(
@@ -211,15 +336,9 @@ function drawTable(
   startY: number,
   images: Map<string, PdfImageAsset>,
 ): number {
-  const colImg = MARGIN + 2;
-  const colSku = MARGIN + IMG_COL_W + 2;
-  const colSkuW = 34;
-  const colLabel = colSku + colSkuW + 2;
-  const colQty = MARGIN + CONTENT_W - 58;
-  const colUnit = MARGIN + CONTENT_W - 40;
-  const colTotal = MARGIN + CONTENT_W - 3;
-  const labelW = colQty - colLabel - 4;
+  if (lines.length === 0) return startY;
 
+  const layout = measureTableLayout(pdf, lines);
   let y = ensureSpace(pdf, startY, 14);
 
   setFill(pdf, COLORS.surface);
@@ -230,19 +349,15 @@ function drawTable(
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(7);
   setText(pdf, COLORS.muted);
-  pdf.text("RÉF.", colSku, y + 5.2);
-  pdf.text("DÉSIGNATION", colLabel, y + 5.2);
-  pdf.text("QTÉ", colQty, y + 5.2, { align: "right" });
-  pdf.text("PU HT", colUnit, y + 5.2, { align: "right" });
-  pdf.text("TOTAL HT", colTotal, y + 5.2, { align: "right" });
+  pdf.text("RÉF.", layout.ref.x, y + 5.2);
+  pdf.text("DÉSIGNATION", layout.label.x, y + 5.2);
+  drawCol(pdf, layout.qty, y + 5.2, "QTÉ");
+  drawCol(pdf, layout.unit, y + 5.2, "PU HT");
+  drawCol(pdf, layout.total, y + 5.2, "TOTAL HT");
   y += 8;
 
   lines.forEach((line, index) => {
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8.5);
-    const labelLines = pdf.splitTextToSize(line.label, labelW) as string[];
-    const rowH = Math.max(IMG_FRAME + 4, 4 + labelLines.length * 4);
-
+    const rowH = measureRowHeight(pdf, line, layout);
     y = ensureSpace(pdf, y, rowH + 1);
 
     if (index % 2 === 1) {
@@ -252,50 +367,60 @@ function drawTable(
 
     setDraw(pdf, COLORS.border);
     pdf.setLineWidth(0.15);
-    pdf.line(MARGIN, y + rowH, MARGIN + CONTENT_W, y + rowH);
+    pdf.line(MARGIN, y + rowH, CONTENT_RIGHT, y + rowH);
 
-    // Photo produit
-    const asset = line.imageUrl ? images.get(line.imageUrl) : null;
+    // Photo
+    const frameX = layout.img.x + (layout.img.w - IMG_FRAME) / 2;
+    const frameY = y + (rowH - IMG_FRAME) / 2;
     setFill(pdf, COLORS.white);
     setDraw(pdf, COLORS.border);
     pdf.setLineWidth(0.2);
-    pdf.roundedRect(colImg, y + (rowH - IMG_FRAME) / 2, IMG_FRAME, IMG_FRAME, 1, 1, "FD");
+    pdf.roundedRect(frameX, frameY, IMG_FRAME, IMG_FRAME, 1, 1, "FD");
+    const asset = line.imageUrl ? images.get(line.imageUrl) : null;
     if (asset) {
       drawContainedImage(
         pdf,
         asset,
-        colImg + 1,
-        y + (rowH - IMG_FRAME) / 2 + 1,
-        IMG_FRAME - 2,
+        frameX + IMG_PAD,
+        frameY + IMG_PAD,
+        IMG_FRAME - IMG_PAD * 2,
       );
     }
 
-    // Pastille SKU
-    const sku = line.ref;
+    // SKU (peut wraper dans la colonne dédiée)
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(6.5);
-    const skuW = Math.min(colSkuW - 2, pdf.getTextWidth(sku) + 3.5);
+    const skuLines = pdf.splitTextToSize(line.ref, layout.ref.w - 4) as string[];
+    const skuBlockH = skuLines.length * 3.6 + 2.4;
+    const skuTop = y + (rowH - skuBlockH) / 2;
     setFill(pdf, COLORS.skuBg);
-    pdf.roundedRect(colSku, y + rowH / 2 - 2.2, skuW, 4.4, 0.8, 0.8, "F");
+    pdf.roundedRect(layout.ref.x, skuTop, layout.ref.w - 1, skuBlockH, 0.8, 0.8, "F");
     setText(pdf, COLORS.text);
-    pdf.text(sku, colSku + 1.6, y + rowH / 2 + 0.9);
+    pdf.text(skuLines, layout.ref.x + 1.5, skuTop + 3.2);
 
     // Désignation
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8.5);
     setText(pdf, COLORS.text);
-    pdf.text(labelLines, colLabel, y + 5);
+    const labelLines = pdf.splitTextToSize(
+      line.label,
+      layout.label.w,
+    ) as string[];
+    const labelBlockH = labelLines.length * LINE_H;
+    let labelY = y + (rowH - labelBlockH) / 2 + 3.2;
+    for (const part of labelLines) {
+      pdf.text(part, layout.label.x, labelY);
+      labelY += LINE_H;
+    }
 
-    pdf.text(String(line.qty), colQty, y + 5, { align: "right" });
+    const numY = y + rowH / 2 + 1;
+    setText(pdf, COLORS.text);
+    drawCol(pdf, layout.qty, numY, String(line.qty));
     setText(pdf, COLORS.muted);
-    pdf.text(formatPdfPrice(line.unitPriceHT), colUnit, y + 5, {
-      align: "right",
-    });
+    drawCol(pdf, layout.unit, numY, formatPdfPrice(line.unitPriceHT));
     pdf.setFont("helvetica", "bold");
     setText(pdf, COLORS.text);
-    pdf.text(formatPdfPrice(line.lineTotalHT), colTotal, y + 5, {
-      align: "right",
-    });
+    drawCol(pdf, layout.total, numY, formatPdfPrice(line.lineTotalHT));
 
     y += rowH;
   });
@@ -308,20 +433,18 @@ function drawTotals(
   doc: PdfQuoteDocument,
   startY: number,
 ): number {
-  const boxW = 74;
-  const boxX = MARGIN + CONTENT_W - boxW;
+  const boxW = 78;
+  const boxX = CONTENT_RIGHT - boxW;
   const hasTtc = doc.totals.totalTTC != null;
   const boxH = hasTtc ? 26 : 14;
-  let y = ensureSpace(pdf, startY, boxH + 10);
+  let y = ensureSpace(pdf, startY, boxH + 12);
 
   if (doc.totals.note) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     setText(pdf, COLORS.muted);
-    const noteLines = pdf.splitTextToSize(
-      doc.totals.note,
-      CONTENT_W - boxW - 8,
-    ) as string[];
+    const noteMaxW = Math.max(40, CONTENT_W - boxW - 10);
+    const noteLines = pdf.splitTextToSize(doc.totals.note, noteMaxW) as string[];
     pdf.text(noteLines, MARGIN, y + 5);
   }
 
@@ -372,7 +495,7 @@ function drawFooters(pdf: jsPDF, doc: PdfQuoteDocument): void {
 
     setDraw(pdf, COLORS.border);
     pdf.setLineWidth(0.3);
-    pdf.line(MARGIN, FOOTER_Y - 4, MARGIN + CONTENT_W, FOOTER_Y - 4);
+    pdf.line(MARGIN, FOOTER_Y - 4, CONTENT_RIGHT, FOOTER_Y - 4);
 
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(7);
@@ -386,7 +509,7 @@ function drawFooters(pdf: jsPDF, doc: PdfQuoteDocument): void {
       pdf.text(lines.slice(0, 2), MARGIN, FOOTER_Y);
     }
 
-    pdf.text(`${i} / ${pageCount}`, MARGIN + CONTENT_W, FOOTER_Y, {
+    pdf.text(`${i} / ${pageCount}`, CONTENT_RIGHT, FOOTER_Y, {
       align: "right",
     });
   }

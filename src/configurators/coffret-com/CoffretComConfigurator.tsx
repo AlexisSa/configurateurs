@@ -5,6 +5,7 @@ import { Text } from "@/core/design-system";
 import { downloadQuotePdf } from "@/core/pdf";
 import { getPricingTierLabel } from "@/core/pricing/pricingTiers";
 import { buildCoffretComPdfDocument } from "./buildPdfDocument";
+import { CoffretQuantityCard } from "./CoffretQuantityCard";
 import { GammeStep } from "./GammeStep";
 import { NomenclaturePanel } from "./NomenclaturePanel";
 import { OptionsStep } from "./OptionsStep";
@@ -72,14 +73,21 @@ export function CoffretComConfigurator() {
           />
 
           {complete && (
-            <OptionsStep
-              state={state}
-              compatibility={compatibility}
-              imageBySku={imageBySku}
-              isGroupConfigured={isGroupConfigured}
-              onSetOption={setOptionValue}
-              onSetCoffretCount={setCoffretCount}
-            />
+            <>
+              {/* Mobile : quantité au-dessus des options (sidebar masquée) */}
+              <CoffretQuantityCard
+                className="lg:hidden"
+                count={state.coffretCount}
+                onChange={setCoffretCount}
+              />
+              <OptionsStep
+                state={state}
+                compatibility={compatibility}
+                imageBySku={imageBySku}
+                isGroupConfigured={isGroupConfigured}
+                onSetOption={setOptionValue}
+              />
+            </>
           )}
         </div>
 
@@ -90,6 +98,7 @@ export function CoffretComConfigurator() {
           unitTotal={unitPricing.total}
           orderTotal={orderTotal}
           coffretCount={state.coffretCount}
+          onCoffretCountChange={setCoffretCount}
           configRef={configRef}
           pricingTierCode={pricingTierCode}
           pricesLoading={pricesStatus === "loading"}

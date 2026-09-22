@@ -11,6 +11,7 @@ import {
 import { getPricingTierLabel } from "@/core/pricing/pricingTiers";
 import type { PricingTierCode } from "@/core/pricing/pricingTiers";
 import { REF_TOKEN_LEGEND } from "./applyLogicalRef";
+import { CoffretQuantityCard } from "./CoffretQuantityCard";
 import type { PricedBomLine } from "./useCoffretConfiguration";
 import { catalog } from "./catalog";
 
@@ -21,6 +22,7 @@ type NomenclaturePanelProps = {
   unitTotal: number;
   orderTotal: number;
   coffretCount: number;
+  onCoffretCountChange: (count: number) => void;
   configRef: string | null;
   pricingTierCode: PricingTierCode;
   pricesLoading?: boolean;
@@ -40,6 +42,7 @@ export function NomenclaturePanel({
   unitTotal,
   orderTotal,
   coffretCount,
+  onCoffretCountChange,
   configRef,
   pricingTierCode,
   pricesLoading,
@@ -62,7 +65,17 @@ export function NomenclaturePanel({
   }
 
   return (
-    <Card className="flex flex-col gap-4 lg:sticky lg:top-4">
+    <div className="flex flex-col gap-4 lg:sticky lg:top-4">
+      {/* Desktop : quantité collée à la nomenclature (masquée sur mobile) */}
+      {hasGamme && (
+        <CoffretQuantityCard
+          className="hidden lg:flex"
+          count={coffretCount}
+          onChange={onCoffretCountChange}
+        />
+      )}
+
+      <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Heading level={2}>Nomenclature</Heading>
         {hasGamme && (
@@ -148,12 +161,6 @@ export function NomenclaturePanel({
           {pricesLoading && (
             <Text muted className="text-sm">
               Chargement des prix…
-            </Text>
-          )}
-
-          {coffretCount > 1 && (
-            <Text className="text-sm text-zinc-600">
-              {coffretCount}× configuration unitaire
             </Text>
           )}
 
@@ -256,5 +263,6 @@ export function NomenclaturePanel({
         )}
       </div>
     </Card>
+    </div>
   );
 }

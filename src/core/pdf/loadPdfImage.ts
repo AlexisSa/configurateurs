@@ -6,18 +6,33 @@ export type PdfImageAsset = {
 
 const cache = new Map<string, PdfImageAsset | null>();
 
+/** Passe par /api/pdf-image pour contourner l’absence de CORS sur xeilom.fr. */
+export function pdfImageFetchUrl(url: string): string {
+  if (typeof window === "undefined") return url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.origin === window.location.origin) return url;
+    return `/api/pdf-image?url=${encodeURIComponent(parsed.toString())}`;
+  } catch {
+    return url;
+  }
+}
+
 async function blobToAsset(blob: Blob): Promise<PdfImageAsset | null> {
   try {
     const bitmap = await createImageBitmap(blob);
     const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    // Limite mémoire PDF (grandes photos Oxatis)
+    const maxEdge = 800;
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       bitmap.close();
       return null;
     }
-    ctx.drawImage(bitmap, 0, 0);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
     return {
       dataUrl: canvas.toDataURL("image/png"),
@@ -31,7 +46,7 @@ async function blobToAsset(blob: Blob): Promise<PdfImageAsset | null> {
 
 /**
  * Charge une image distante pour jsPDF (cache mémoire).
- * Retourne null si CORS / 404 / erreur.
+ * URLs externes → proxy same-origin.
  */
 export async function loadPdfImage(
   url: string | null | undefined,
@@ -39,8 +54,10 @@ export async function loadPdfImage(
   if (!url) return null;
   if (cache.has(url)) return cache.get(url) ?? null;
 
+  const fetchUrl = pdfImageFetchUrl(url);
+
   try {
-    const response = await fetch(url, { mode: "cors" });
+    const response = await fetch(fetchUrl);
     if (!response.ok) {
       cache.set(url, null);
       return null;
@@ -49,45 +66,9 @@ export async function loadPdfImage(
     cache.set(url, asset);
     return asset;
   } catch {
-    // Fallback Image + crossOrigin (certains CDN)
-    try {
-      const asset = await loadViaImageElement(url);
-      cache.set(url, asset);
-      return asset;
-    } catch {
-      cache.set(url, null);
-      return null;
-    }
+    cache.set(url, null);
+    return null;
   }
-}
-
-function loadViaImageElement(url: string): Promise<PdfImageAsset | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx || !canvas.width) {
-          resolve(null);
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        resolve({
-          dataUrl: canvas.toDataURL("image/png"),
-          width: canvas.width,
-          height: canvas.height,
-        });
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
 }
 
 /** Précharge un ensemble d’URLs (dédupliquées). */

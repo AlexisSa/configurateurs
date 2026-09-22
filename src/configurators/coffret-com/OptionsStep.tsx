@@ -25,7 +25,6 @@ type OptionsStepProps = {
   imageBySku: Map<string, string>;
   isGroupConfigured: (groupId: string) => boolean;
   onSetOption: (groupId: string, value: string) => void;
-  onSetCoffretCount: (count: number) => void;
 };
 
 function noneOptionId(options: CatalogOption[]): string | undefined {
@@ -52,7 +51,7 @@ function selectionLabel(
 }
 
 /**
- * Options en accordéons + inclus + quantité coffrets.
+ * Options en accordéons + inclus.
  */
 export function OptionsStep({
   state,
@@ -60,7 +59,6 @@ export function OptionsStep({
   imageBySku,
   isGroupConfigured,
   onSetOption,
-  onSetCoffretCount,
 }: OptionsStepProps) {
   const gamme = getGamme(state.gammeId);
   if (!gamme) return null;
@@ -73,27 +71,11 @@ export function OptionsStep({
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <Heading level={2}>Options</Heading>
-            <Text muted className="mt-1 text-sm">
-              Cliquez sur « Aucun » ou choisissez une option pour continuer.
-            </Text>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-zinc-800">
-              Nombre de coffrets
-            </span>
-            <QuantityStepper
-              value={state.coffretCount}
-              min={1}
-              max={1000}
-              onChange={onSetCoffretCount}
-            />
-            <Text muted className="text-xs">
-              de 1 à 1000
-            </Text>
-          </div>
+        <div>
+          <Heading level={2}>Options</Heading>
+          <Text muted className="mt-1 text-sm">
+            Cliquez sur « Aucun » ou choisissez une option pour continuer.
+          </Text>
         </div>
 
         {gamme.includedItems.length > 0 && (
