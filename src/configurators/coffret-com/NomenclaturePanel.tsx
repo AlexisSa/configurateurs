@@ -10,6 +10,8 @@ import {
 } from "@/core/design-system";
 import { REF_TOKEN_LEGEND } from "./applyLogicalRef";
 import { CoffretQuantityCard } from "./CoffretQuantityCard";
+import { ContactFields } from "./ContactFields";
+import type { QuoteContactInfo } from "./contactInfo";
 import type { PricedBomLine } from "./useCoffretConfiguration";
 import { catalog } from "./catalog";
 
@@ -24,6 +26,11 @@ type NomenclaturePanelProps = {
   configRef: string | null;
   pricesLoading?: boolean;
   missingSkus: string[];
+  contact: QuoteContactInfo;
+  onContactChange: <K extends keyof QuoteContactInfo>(
+    field: K,
+    value: QuoteContactInfo[K],
+  ) => void;
   onReset: () => void;
   onExportPdf: () => void | Promise<void>;
   onApplyRef: (ref: string) => string | null;
@@ -43,6 +50,8 @@ export function NomenclaturePanel({
   configRef,
   pricesLoading,
   missingSkus,
+  contact,
+  onContactChange,
   onReset,
   onExportPdf,
   onApplyRef,
@@ -208,6 +217,8 @@ export function NomenclaturePanel({
               Prix manquants : {missingSkus.join(", ")}
             </Text>
           )}
+
+          <ContactFields contact={contact} onChange={onContactChange} />
 
           {!ready && (
             <Text muted className="text-sm">

@@ -2,6 +2,10 @@ import type { PdfQuoteDocument } from "@/core/pdf";
 import type { PricingTierCode } from "@/core/pricing/pricingTiers";
 import { catalog, getGamme } from "./catalog";
 import type { ConfigState } from "./configState";
+import {
+  contactInfoToPdfMeta,
+  type QuoteContactInfo,
+} from "./contactInfo";
 import type { PricedBomLine } from "./useCoffretConfiguration";
 
 /** Adapte l’état coffret → document PDF partagé `@/core/pdf`. */
@@ -12,6 +16,7 @@ export function buildCoffretComPdfDocument(input: {
   pricingTierCode: PricingTierCode;
   configRef: string | null;
   imageBySku: Map<string, string>;
+  contact?: QuoteContactInfo;
 }): PdfQuoteDocument {
   const {
     state,
@@ -20,6 +25,7 @@ export function buildCoffretComPdfDocument(input: {
     pricingTierCode,
     configRef,
     imageBySku,
+    contact,
   } = input;
   const gamme = getGamme(state.gammeId);
   const count = Math.max(1, state.coffretCount || 1);
@@ -43,6 +49,7 @@ export function buildCoffretComPdfDocument(input: {
         ? [{ label: "Référence configurée", value: configRef }]
         : []),
       { label: "Quantité", value: `${count} coffret${count > 1 ? "s" : ""}` },
+      ...(contact ? contactInfoToPdfMeta(contact) : []),
     ],
     lines: pricedBom.map((line) => ({
       ref: line.sku,

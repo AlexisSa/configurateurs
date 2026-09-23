@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Text } from "@/core/design-system";
 import { downloadQuotePdf } from "@/core/pdf";
 import { buildCoffretComPdfDocument } from "./buildPdfDocument";
 import { CoffretQuantityCard } from "./CoffretQuantityCard";
+import {
+  createEmptyContactInfo,
+  type QuoteContactInfo,
+} from "./contactInfo";
 import { GammeStep } from "./GammeStep";
 import { NomenclaturePanel } from "./NomenclaturePanel";
 import { OptionsStep } from "./OptionsStep";
@@ -15,6 +20,7 @@ import { useCoffretConfiguration } from "./useCoffretConfiguration";
  */
 export function CoffretComConfigurator() {
   const { pricingTierCode } = useClientContext();
+  const [contact, setContact] = useState(createEmptyContactInfo);
   const {
     segments,
     gammes,
@@ -36,6 +42,13 @@ export function CoffretComConfigurator() {
     isGroupConfigured,
   } = useCoffretConfiguration(pricingTierCode);
 
+  function updateContact<K extends keyof QuoteContactInfo>(
+    field: K,
+    value: QuoteContactInfo[K],
+  ) {
+    setContact((prev) => ({ ...prev, [field]: value }));
+  }
+
   function handleExportPdf() {
     if (!ready || pricedBom.length === 0) return;
     const doc = buildCoffretComPdfDocument({
@@ -45,6 +58,7 @@ export function CoffretComConfigurator() {
       pricingTierCode,
       configRef,
       imageBySku,
+      contact,
     });
     const refSlug = (configRef ?? state.gammeId).replace(
       /[^a-zA-Z0-9_-]/g,
@@ -101,6 +115,8 @@ export function CoffretComConfigurator() {
           configRef={configRef}
           pricesLoading={pricesStatus === "loading"}
           missingSkus={unitPricing.missingSkus}
+          contact={contact}
+          onContactChange={updateContact}
           onReset={resetConfiguration}
           onExportPdf={handleExportPdf}
           onApplyRef={applyLogicalRef}
