@@ -1,8 +1,5 @@
 import type { PdfQuoteDocument } from "@/core/pdf";
-import {
-  getPricingTierLabel,
-  type PricingTierCode,
-} from "@/core/pricing/pricingTiers";
+import type { PricingTierCode } from "@/core/pricing/pricingTiers";
 import { catalog, getGamme } from "./catalog";
 import type { ConfigState } from "./configState";
 import type { PricedBomLine } from "./useCoffretConfiguration";
@@ -41,7 +38,6 @@ export function buildCoffretComPdfDocument(input: {
     heroImageUrl: heroImageUrl ?? null,
     configuratorId: "coffret-com",
     clientTariffCode: pricingTierCode,
-    tariffLabel: getPricingTierLabel(pricingTierCode),
     meta: [
       ...(configRef
         ? [{ label: "Référence configurée", value: configRef }]
@@ -70,7 +66,7 @@ export function buildCoffretComPdfDocument(input: {
           : undefined,
     },
     footerNote:
-      "Prix HT selon grille client. TTC indicatif (TVA). Document généré par le configurateur Xeilom — non contractuel.",
+      "Prix HT. TTC indicatif (TVA). Document généré par le configurateur Xeilom — non contractuel.",
   };
 }
 

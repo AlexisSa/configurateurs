@@ -3,7 +3,6 @@
 import { useClientContext } from "@/core/client-context/ClientProvider";
 import { Text } from "@/core/design-system";
 import { downloadQuotePdf } from "@/core/pdf";
-import { getPricingTierLabel } from "@/core/pricing/pricingTiers";
 import { buildCoffretComPdfDocument } from "./buildPdfDocument";
 import { CoffretQuantityCard } from "./CoffretQuantityCard";
 import { GammeStep } from "./GammeStep";
@@ -58,7 +57,7 @@ export function CoffretComConfigurator() {
     <div className="flex w-full flex-col gap-4">
       <div>
         <Text className="text-sm text-zinc-600">
-          XH&apos;system · Grade 3 TV · {getPricingTierLabel(pricingTierCode)}
+          XH&apos;system · Grade 3 TV
         </Text>
       </div>
 
@@ -100,7 +99,6 @@ export function CoffretComConfigurator() {
           coffretCount={state.coffretCount}
           onCoffretCountChange={setCoffretCount}
           configRef={configRef}
-          pricingTierCode={pricingTierCode}
           pricesLoading={pricesStatus === "loading"}
           missingSkus={unitPricing.missingSkus}
           onReset={resetConfiguration}

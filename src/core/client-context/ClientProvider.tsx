@@ -9,14 +9,12 @@ import {
 import { useEmbedContext } from "@/core/embed/useEmbedContext";
 import { useEmbedResize } from "@/core/embed/useEmbedResize";
 import type { PricingTierCode } from "@/core/pricing/pricingTiers";
-import { getPricingTierLabel } from "@/core/pricing/pricingTiers";
 
 export type ClientContextValue = {
-  /** Code tarifaire appliqué (lecture seule pour les configurateurs). */
+  /** Code tarifaire appliqué (lecture seule — calcul prix uniquement, jamais affiché). */
   pricingTierCode: PricingTierCode;
   categoryId: string | null;
   isEmbed: boolean;
-  tariffLabel: string;
 };
 
 const ClientContext = createContext<ClientContextValue | null>(null);
@@ -30,7 +28,6 @@ export function ClientProvider({ children }: { children: ReactNode }) {
       pricingTierCode,
       categoryId,
       isEmbed,
-      tariffLabel: getPricingTierLabel(pricingTierCode),
     }),
     [pricingTierCode, categoryId, isEmbed],
   );

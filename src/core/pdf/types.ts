@@ -28,8 +28,14 @@ export type PdfQuoteDocument = {
   heroImageUrl?: string | null;
   /** Id registre, ex. coffret-com */
   configuratorId: string;
+  /**
+   * Code grille interne (calcul prix / nom fichier).
+   * Ne jamais afficher ce code ni son libellé dans l’UI ou le PDF.
+   */
   clientTariffCode: PricingTierCode;
-  /** Libellé grille (ex. « Tarif public ») — sinon le code S–Z */
+  /**
+   * @deprecated Ne plus renseigner : les libellés tarif ne doivent pas apparaître au client.
+   */
   tariffLabel?: string;
   /** Lignes libres (réf. logique, client, date…) */
   meta?: PdfQuoteMeta[];

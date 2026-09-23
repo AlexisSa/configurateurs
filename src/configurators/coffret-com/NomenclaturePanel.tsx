@@ -8,8 +8,6 @@ import {
   Heading,
   Text,
 } from "@/core/design-system";
-import { getPricingTierLabel } from "@/core/pricing/pricingTiers";
-import type { PricingTierCode } from "@/core/pricing/pricingTiers";
 import { REF_TOKEN_LEGEND } from "./applyLogicalRef";
 import { CoffretQuantityCard } from "./CoffretQuantityCard";
 import type { PricedBomLine } from "./useCoffretConfiguration";
@@ -24,7 +22,6 @@ type NomenclaturePanelProps = {
   coffretCount: number;
   onCoffretCountChange: (count: number) => void;
   configRef: string | null;
-  pricingTierCode: PricingTierCode;
   pricesLoading?: boolean;
   missingSkus: string[];
   onReset: () => void;
@@ -44,7 +41,6 @@ export function NomenclaturePanel({
   coffretCount,
   onCoffretCountChange,
   configRef,
-  pricingTierCode,
   pricesLoading,
   missingSkus,
   onReset,
@@ -154,10 +150,6 @@ export function NomenclaturePanel({
             </div>
           )}
 
-          <Text className="text-xs text-zinc-500">
-            Grille tarifaire : {getPricingTierLabel(pricingTierCode)}
-          </Text>
-
           {pricesLoading && (
             <Text muted className="text-sm">
               Chargement des prix…
@@ -213,7 +205,7 @@ export function NomenclaturePanel({
 
           {missingSkus.length > 0 && (
             <Text className="text-sm text-amber-800">
-              Prix manquants ({pricingTierCode}) : {missingSkus.join(", ")}
+              Prix manquants : {missingSkus.join(", ")}
             </Text>
           )}
 
@@ -228,8 +220,7 @@ export function NomenclaturePanel({
           </Button>
 
           <Text muted className="text-xs">
-            Devis pour {coffretCount} coffret{coffretCount > 1 ? "s" : ""}. Tarif
-            appliqué : {getPricingTierLabel(pricingTierCode)}.
+            Devis pour {coffretCount} coffret{coffretCount > 1 ? "s" : ""}.
           </Text>
         </>
       )}

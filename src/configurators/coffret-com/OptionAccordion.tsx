@@ -10,6 +10,8 @@ type OptionAccordionProps = {
   configured?: boolean;
   defaultOpen?: boolean;
   showClear?: boolean;
+  /** Libellé du bouton de choix explicite « pas de produit » (défaut : Sans option). */
+  clearLabel?: string;
   clearActive?: boolean;
   onClear?: () => void;
   children: ReactNode;
@@ -25,6 +27,7 @@ export function OptionAccordion({
   configured = false,
   defaultOpen = false,
   showClear = false,
+  clearLabel = "Sans option",
   clearActive = false,
   onClear,
   children,
@@ -85,13 +88,15 @@ export function OptionAccordion({
             type="button"
             onClick={onClear}
             aria-pressed={clearActive}
-            className={`shrink-0 px-3 text-xs font-medium ${
+            aria-label={`${clearLabel} — valider ce groupe sans produit`}
+            title="Valider ce groupe sans ajouter de produit"
+            className={`shrink-0 self-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition ${
               clearActive
-                ? "text-brand"
-                : "text-zinc-500 hover:text-zinc-800"
+                ? "border-brand bg-brand text-white"
+                : "border-zinc-300 bg-white text-zinc-700 hover:border-brand/40 hover:bg-brand-muted hover:text-brand"
             }`}
           >
-            Aucun
+            {clearLabel}
           </button>
         )}
       </div>

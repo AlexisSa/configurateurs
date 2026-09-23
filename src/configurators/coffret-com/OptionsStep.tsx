@@ -41,13 +41,19 @@ function selectionLabel(
   const group = getOptionGroup(groupId);
   if (group?.type === "quantity") {
     const n = Number(raw);
-    if (!Number.isFinite(n) || n === 0) return "Aucun";
+    if (!Number.isFinite(n) || n === 0) return "Sans option";
     return String(n);
   }
   const option = getOption(raw) ?? options.find((o) => o.id === raw);
   if (!option) return null;
-  if (option.isNone) return "Aucun";
+  if (option.isNone) return "Sans option";
   return option.label;
+}
+
+/** Libellé UI pour l’option « none » (évite la confusion avec « rien de sélectionné »). */
+function noneChoiceLabel(option?: CatalogOption | null): string {
+  if (option && !option.isNone) return option.label;
+  return "Sans option";
 }
 
 /**
@@ -74,7 +80,7 @@ export function OptionsStep({
         <div>
           <Heading level={2}>Options</Heading>
           <Text muted className="mt-1 text-sm">
-            Cliquez sur « Aucun » ou choisissez une option pour continuer.
+            Pour chaque groupe, choisissez un produit ou validez « Sans option ».
           </Text>
         </div>
 
@@ -103,10 +109,12 @@ export function OptionsStep({
                 ? "Pré-sélectionné : Brassage intérieur"
                 : !configured
                   ? group.type === "quantity"
-                    ? "Choisissez une quantité ou cliquez sur « Aucun » pour continuer"
-                    : "Cliquez sur « Aucun » ou choisissez une option pour continuer"
+                    ? "Choisissez une quantité, ou validez « Sans option »"
+                    : "Choisissez un produit, ou validez « Sans option »"
                   : label
-                    ? `Sélection : ${label}`
+                    ? label === "Sans option"
+                      ? "Validé : sans option"
+                      : `Sélection : ${label}`
                     : undefined;
 
             return (
@@ -118,6 +126,7 @@ export function OptionsStep({
                 configured={configured}
                 defaultOpen={index === 0}
                 showClear={group.optional !== false}
+                clearLabel="Sans option"
                 clearActive={
                   group.type === "quantity"
                     ? Number(state.options[groupId] ?? 0) === 0 &&
@@ -153,7 +162,7 @@ export function OptionsStep({
                         )}
                         onClick={() => onSetOption("rj45", "0")}
                       >
-                        Aucun
+                        Sans option
                       </button>
                       {rj45Presets.map((preset) => (
                         <button
@@ -239,9 +248,17 @@ export function OptionsStep({
                           )}
                           <span className="min-w-0">
                             <span className="block font-medium">
-                              {option.label}
+                              {noneChoiceLabel(option)}
                             </span>
-                            {option.sku ? (
+                            {option.isNone ? (
+                              <span
+                                className={`mt-0.5 block text-xs ${
+                                  selected ? "text-white/75" : "text-zinc-500"
+                                }`}
+                              >
+                                Valider ce groupe sans ajouter de produit
+                              </span>
+                            ) : option.sku ? (
                               <span
                                 className={`mt-0.5 block text-xs ${
                                   selected ? "text-white/75" : "text-zinc-500"

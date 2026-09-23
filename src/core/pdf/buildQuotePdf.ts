@@ -251,17 +251,7 @@ function drawHeader(
     textY += subLines.length * 5;
   }
 
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  setText(pdf, COLORS.muted);
-  const tariff = doc.tariffLabel ?? `Grille ${doc.clientTariffCode}`;
-  const tariffLines = pdf.splitTextToSize(
-    `${tariff}  ·  ${doc.configuratorId}`,
-    textMaxW,
-  ) as string[];
-  pdf.text(tariffLines, textLeft, textY);
-
-  const textBlockH = textY - y + tariffLines.length * 4 + 2;
+  const textBlockH = textY - y + 2;
   return y + Math.max(hero ? heroSize + 4 : 8, textBlockH) + 4;
 }
 
@@ -523,7 +513,7 @@ export async function downloadQuotePdf(
   const blob = await buildQuotePdfBlob(doc);
   const name =
     filename ??
-    `${doc.configuratorId}-${doc.clientTariffCode}-${Date.now()}.pdf`;
+    `${doc.configuratorId}-${Date.now()}.pdf`;
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

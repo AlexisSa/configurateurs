@@ -1,0 +1,22 @@
+---
+description: Ne jamais afficher le tarif client (libellé ou code S/M/B/A/Z) dans l’UI ou le PDF
+alwaysApply: true
+---
+
+# Tarif client — pas d’affichage en clair
+
+Ne **jamais** montrer à l’utilisateur le tarif / la grille appliquée, ni sous forme de libellé ni de code.
+
+**Interdit dans l’UI, le PDF, les messages utilisateur, les disclaimers visibles :**
+- Libellés du type « Particulier / public », « Tarif public », « Tarif A/B/M/S/Z »
+- Codes `S`, `M`, `B`, `A`, `Z` présentés comme « grille » ou « tarif appliqué »
+- Mentions du genre « Grille tarifaire : … », « Tarif appliqué : … », « Prix selon votre compte »
+- `getPricingTierLabel(...)` (ou équivalent) dans du JSX / texte PDF rendu
+- Code tarif dans le **nom de fichier** PDF téléchargé
+
+**Autorisé (interne uniquement) :**
+- Utiliser `pricingTierCode` pour **calculer** les prix (`pickTierPrice`, payload, requêtes)
+- Stocker `clientTariffCode` dans le payload technique (panier / API), sans l’afficher
+- Pages de debug / simulateur embed (`embed-test.html`) destinées aux devs
+
+Si besoin d’un disclaimer prix : rester neutre (« Prix HT. TTC indicatif. ») **sans** évoquer compte, grille ou code.

@@ -32,6 +32,11 @@ export function resolvePricingTierCode(
   return categoryToTier.get(String(categoryIdOrTier).trim()) ?? (pricingTiersConfig.defaultTier as PricingTierCode);
 }
 
+/**
+ * Libellé interne d’un code tarif (S–Z).
+ * Ne jamais afficher ce texte dans l’UI, le PDF ou un message utilisateur
+ * (voir règle `.cursor/rules/no-visible-tariff-labels.mdc`).
+ */
 export function getPricingTierLabel(code: PricingTierCode): string {
   const tier = pricingTiersConfig.tiers.find((entry) => entry.code === code);
   return tier?.label ?? code;
