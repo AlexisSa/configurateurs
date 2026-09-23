@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
-import { loadPdfImages, type PdfImageAsset } from "./loadPdfImage";
+import { BRAND_LOGO_URL } from "@/core/brand/logo";
+import { loadPdfImage, loadPdfImages, type PdfImageAsset } from "./loadPdfImage";
 import type { PdfQuoteDocument, PdfQuoteLine } from "./types";
 
 /** Palette alignée tokens Xeilom (--brand #363bc7, zinc). */
@@ -176,6 +177,18 @@ function measureTableLayout(doc: jsPDF, lines: PdfQuoteLine[]): TableLayout {
   return { img, ref, label, qty, unit, total };
 }
 
+function logoDisplaySize(logo: PdfImageAsset): { w: number; h: number } {
+  const maxH = 11;
+  const maxW = 48;
+  let w = (logo.width / Math.max(1, logo.height)) * maxH;
+  let h = maxH;
+  if (w > maxW) {
+    w = maxW;
+    h = (logo.height / Math.max(1, logo.width)) * maxW;
+  }
+  return { w, h };
+}
+
 /**
  * Génère un Blob PDF (charge les images distantes si présentes).
  */
@@ -186,10 +199,13 @@ export async function buildQuotePdfBlob(
     docData.heroImageUrl,
     ...docData.lines.map((line) => line.imageUrl),
   ];
-  const images = await loadPdfImages(imageUrls);
+  const [logo, images] = await Promise.all([
+    loadPdfImage(BRAND_LOGO_URL),
+    loadPdfImages(imageUrls),
+  ]);
 
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
-  let y = drawHeader(pdf, docData, images);
+  let y = drawHeader(pdf, docData, images, logo);
   y = drawMeta(pdf, docData, y);
   y = drawTable(pdf, docData.lines, y, images);
   drawTotals(pdf, docData, y);
@@ -202,32 +218,55 @@ function drawHeader(
   pdf: jsPDF,
   doc: PdfQuoteDocument,
   images: Map<string, PdfImageAsset>,
+  logo: PdfImageAsset | null,
 ): number {
+  const headerH = 30;
+  setFill(pdf, COLORS.white);
+  pdf.rect(0, 0, PAGE_W, headerH, "F");
+
   setFill(pdf, COLORS.brand);
-  pdf.rect(0, 0, PAGE_W, 28, "F");
+  pdf.rect(0, 0, PAGE_W, 1.4, "F");
 
-  setText(pdf, COLORS.white);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(16);
-  pdf.text("XEILOM", MARGIN, 12);
+  const size = logo ? logoDisplaySize(logo) : null;
+  if (logo && size) {
+    pdf.addImage(
+      logo.dataUrl,
+      logo.format ?? "PNG",
+      MARGIN,
+      (headerH - size.h) / 2 + 0.4,
+      size.w,
+      size.h,
+    );
+  } else {
+    setText(pdf, COLORS.brand);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text("XEILOM", MARGIN, 13);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    setText(pdf, COLORS.muted);
+    pdf.text("Cabling expert", MARGIN, 18.5);
+  }
 
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.text("Cabling expert", MARGIN, 17.5);
-
+  const titleMaxW = size ? CONTENT_W - size.w - 10 : 90;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
-  const titleLines = pdf.splitTextToSize(doc.title, 90) as string[];
-  pdf.text(titleLines, PAGE_W - MARGIN, 11, { align: "right" });
+  setText(pdf, COLORS.text);
+  const titleLines = pdf.splitTextToSize(doc.title, titleMaxW) as string[];
+  pdf.text(titleLines, PAGE_W - MARGIN, 12, { align: "right" });
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  const dateLabel = formatIssuedAt(doc.issuedAt);
-  pdf.text(dateLabel, PAGE_W - MARGIN, 11 + titleLines.length * 4.2, {
+  setText(pdf, COLORS.muted);
+  pdf.text(formatIssuedAt(doc.issuedAt), PAGE_W - MARGIN, 12 + titleLines.length * 4.2, {
     align: "right",
   });
 
-  let y = 36;
+  setDraw(pdf, COLORS.border);
+  pdf.setLineWidth(0.3);
+  pdf.line(MARGIN, headerH - 0.4, CONTENT_RIGHT, headerH - 0.4);
+
+  let y = headerH + 8;
   const hero = doc.heroImageUrl ? images.get(doc.heroImageUrl) : null;
   const heroSize = 28;
   const textLeft = hero ? MARGIN + heroSize + 6 : MARGIN;
